@@ -1,98 +1,24 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:analyzer/dart/analysis/utilities.dart';
-import 'package:analyzer/dart/ast/ast.dart';
-import 'package:gobabel_string_extractor/src/entities/hardcoded_string_dynamic_value_entity.dart';
-import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
-import 'package:path/path.dart' as p;
-import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:args/args.dart';
+import 'package:gobabel_client/gobabel_client.dart';
+import 'package:gobabel_string_extractor/src/usecases/create_human_friendly_arb_keys.dart';
+import 'package:gobabel_string_extractor/src/usecases/define_which_string_label.dart';
+import 'package:gobabel_string_extractor/src/usecases/extract_all_strings_usecase.dart';
+import 'package:gobabel_string_extractor/src/usecases/map_strings_hierarchy.dart';
+import 'package:path/path.dart' as p;
 
-/// Temporary record for raw string nodes.
-class _RawString {
-  final int start;
-  final int end;
-  final String? stringValue;
-  final String filePath;
-
-  final List<HardcodedStringDynamicValue> dynamics;
-
-  _RawString({
-    required this.start,
-    required this.end,
-    required this.stringValue,
-    required this.filePath,
-    required this.dynamics,
-  });
-}
-
-/// AST visitor that collects raw string literals and their interpolations.
-class _RawStringScanner extends RecursiveAstVisitor<void> {
-  final String filePath;
-  final String content;
-  final List<_RawString> rawList;
-
-  _RawStringScanner(this.filePath, this.content, this.rawList);
-
-  @override
-  void visitSimpleStringLiteral(SimpleStringLiteral node) {
-    if (node.thisOrAncestorOfType<Annotation>() != null) return;
-    _addRaw(node);
-    super.visitSimpleStringLiteral(node);
-  }
-
-  @override
-  void visitStringInterpolation(StringInterpolation node) {
-    if (node.thisOrAncestorOfType<Annotation>() != null) return;
-    _addRaw(node);
-    super.visitStringInterpolation(node);
-  }
-
-  void _addRaw(StringLiteral node) {
-    // collect dynamic fields if interpolation
-    final dyn = <HardcodedStringDynamicValue>[];
-    if (node is StringInterpolation) {
-      for (var element in node.elements) {
-        if (element is InterpolationExpression) {
-          final start = element.offset;
-          final end = element.end;
-          final placeholder = content.substring(start, end);
-          dyn.add(
-            HardcodedStringDynamicValue(
-              value: placeholder,
-              parentStartIndex: start - node.offset,
-              parentEndIndex: end - node.offset,
-              fileStartIndex: start,
-              fileEndIndex: end,
-            ),
-          );
-        }
-      }
-    }
-
-    // snippet: full literal including quotes
-    final snippet = content.substring(node.offset, node.end);
-
-    rawList.add(
-      _RawString(
-        start: node.offset,
-        end: node.end,
-        stringValue: snippet,
-        filePath: filePath,
-        dynamics: dyn,
-      ),
+void main(List<String> args) async {
+  // Parse command line arguments
+  final parser = ArgParser()
+    ..addOption('path', abbr: 'p', help: 'Directory to scan')
+    ..addOption('api-key', abbr: 't', help: 'Project API token')
+    ..addOption(
+      'project-sha-identifier',
+      abbr: 's',
+      help: 'Project SHA identifier',
     );
-  }
-}
 
-void main(List<String> args) {
-  final parser =
-      ArgParser()..addOption(
-        'path',
-        abbr: 'p',
-        defaultsTo: 'lib',
-        help: 'Directory to scan',
-      );
   ArgResults res;
   try {
     res = parser.parse(args);
@@ -100,67 +26,84 @@ void main(List<String> args) {
     stderr.writeln('Error parsing args: $e');
     exit(1);
   }
-  final target = res['path'] as String;
-  final dir = Directory(target);
+
+  // Get required parameters
+  final target = res['path'] as String?;
+  final projectApiToken = res['api-key'] as String?;
+  final projectShaIdentifier = res['project-sha-identifier'] as String?;
+
+  if (projectApiToken == null || projectShaIdentifier == null) {
+    stderr.writeln('Error: Project API token and SHA identifier are required');
+    stderr.writeln(
+      'Usage: dart run gobabel_string_extractor --api-key=<api_token> --project-sha-identifier=<sha_identifier> [--path=<directory>]',
+    );
+    exit(1);
+  }
+
+  // Validate directory
+  final dir = target == null ? Directory.current : Directory(target);
   if (!dir.existsSync()) {
     stderr.writeln('Directory not found: $target');
     exit(1);
   }
 
-  final List<HardcodedString> all = [];
+  // Create HTTP client
+  final Client client = Client('http://localhost:8080/');
 
-  for (var entity in dir.listSync(recursive: true)) {
-    if (entity is File &&
-        entity.path.endsWith('.dart') &&
-        entity.path.contains('${dir.path}/lib/') &&
-        entity.path.contains('example.dart')) {
-      final content = entity.readAsStringSync();
-      final rawList = <_RawString>[];
-      try {
-        final unit = parseString(content: content, path: entity.path).unit;
-        unit.accept(_RawStringScanner(entity.path, content, rawList));
-      } catch (_) {
-        continue;
-      }
-      // sort rawList by start ascending
-      rawList.sort((a, b) => a.start.compareTo(b.start));
-      // for each raw, find parent raw if any
-      for (var raw in rawList) {
-        _RawString? parent;
-        for (var cand in rawList) {
-          if (cand == raw) break;
-          if (cand.start <= raw.start && cand.end >= raw.end) {
-            if (parent == null ||
-                (cand.end - cand.start) < (parent.end - parent.start)) {
-              parent = cand;
-            }
-          }
-        }
-        final parentStart = parent != null ? raw.start - parent.start : null;
-        final parentEnd = parent != null ? raw.end - parent.start : null;
-        all.add(
-          HardcodedString(
-            value: raw.stringValue ?? '',
-            filePath: raw.filePath,
-            parentStartIndex: parentStart,
-            parentEndIndex: parentEnd,
-            fileStartIndex: raw.start,
-            fileEndIndex: raw.end,
-            dynamicFields: raw.dynamics,
-          ),
-        );
-      }
-    }
-  }
+  // 1. Extract all strings from the directory
+  print('Extracting strings from ${dir.path}...');
+  final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl();
+  final files = dir.listSync(recursive: true).whereType<File>().toList();
+  final allStrings = await extractAllStringsUsecase.call(files: files);
+  print('Extracted ${allStrings.length} raw strings');
+  final onlyStrings = allStrings.map((s) => s.toMap()).toList();
+  final stringsOutFile = File(p.join(Directory.current.path, 'strings.json'));
+  await stringsOutFile.writeAsString(
+    JsonEncoder.withIndent('  ').convert(onlyStrings),
+  );
 
-  // final out = File('strings.json');
-  // out.writeAsStringSync(
-  //   JsonEncoder.withIndent('  ').convert(all.map((s) => s.toMap()).toList()),
-  // );
-  // print('Extracted ${all.length} strings to ${out.path}');
-  // Output to strings.json
-  final jsonList = all.map((s) => s.toMap()).toList();
+  // 2. Define which strings are labels
+  print('Analyzing which strings are displayable labels...');
+  final defineWhichStringLabelUsecase =
+      DefineWhichStringLabelWithAiOnServerUsecaseImpl(
+        projectApiToken: projectApiToken,
+        projectShaIdentifier: BigInt.parse(projectShaIdentifier),
+        client: client,
+      );
+  final labelStrings = await defineWhichStringLabelUsecase.call(
+    strings: allStrings,
+  );
+  print('Found ${labelStrings.length} displayable labels');
+
+  // 3. Create human-friendly ARB keys
+  print('Creating human-friendly ARB keys...');
+  final createHumanFriendlyArbKeysUsecase =
+      CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl(
+        projectApiToken: projectApiToken,
+        projectShaIdentifier: BigInt.parse(projectShaIdentifier),
+        client: client,
+      );
+  final keyedStrings = await createHumanFriendlyArbKeysUsecase.call(
+    strings: labelStrings,
+  );
+  print('Created ${keyedStrings.length} ARB keys');
+
+  // 4. Map strings hierarchy
+  print('Mapping string hierarchy...');
+  final mapStringsHierarchyUsecase = MapStringsHierarchyUsecase();
+  final labelEntities = await mapStringsHierarchyUsecase.call(
+    strings: labelStrings,
+  );
+  print('Created hierarchy with ${labelEntities.length} root labels');
+
+  // Save the result to strings.json
+  final jsonList = labelEntities.map((label) => label.toJson()).toList();
   final outFile = File(p.join(Directory.current.path, 'strings.json'));
   outFile.writeAsStringSync(JsonEncoder.withIndent('  ').convert(jsonList));
-  print('Extracted ${all.length} strings to ${outFile.path}');
+  print('Saved results to ${outFile.path}');
+
+  /*
+  
+   
+  */
 }
