@@ -1,34 +1,35 @@
+import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_dynamic_value_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/labels_entity.dart';
 
 abstract class IMapStringsHierarchyUsecase {
   Future<List<LabelsEntityRootLabel>> call({
-    required List<HardcodedString> strings,
+    required Map<TranslationKey, HardcodedString> strings,
   });
 }
 
 class MapStringsHierarchyUsecase implements IMapStringsHierarchyUsecase {
   @override
   Future<List<LabelsEntityRootLabel>> call({
-    required List<HardcodedString> strings,
+    required Map<TranslationKey, HardcodedString> strings,
   }) async {
     // First, separate root strings (those without parent) from child strings
-    final rootStrings = strings.where((s) => s.parentStartIndex == null && s.parentEndIndex == null).toList();
-    final childStrings = strings.where((s) => s.parentStartIndex != null && s.parentEndIndex != null).toList();
+    final rootStrings = strings.entries.where((e) => e.value.parentStartIndex == null && e.value.parentEndIndex == null).toList();
+    final childStrings = strings.entries.where((e) => e.value.parentStartIndex != null && e.value.parentEndIndex != null).toList();
     
     // Create root labels from root strings
-    final rootLabels = rootStrings.map((rootString) {
+    final rootLabels = rootStrings.map((rootEntry) {
       // Find children for this root string
-      final children = _buildChildren(rootString, childStrings, rootString.dynamicFields);
+      final children = _buildChildren(rootEntry.value, childStrings, rootEntry.value.dynamicFields, strings);
       
       // Create a root label with its children
       return LabelsEntity.rootLabel(
-        l10nKey: rootString.value, // L10nKey is a typedef for String
-        l10nValue: rootString.value, // L10nValue is a typedef for String
-        fileStartIndex: rootString.fileStartIndex,
-        fileEndIndex: rootString.fileEndIndex,
-        filePath: rootString.filePath, // FilePath is a typedef for String
+        l10nKey: rootEntry.key, // TranslationKey
+        l10nValue: rootEntry.value.value, // Original string value
+        fileStartIndex: rootEntry.value.fileStartIndex,
+        fileEndIndex: rootEntry.value.fileEndIndex,
+        filePath: rootEntry.value.filePath, // FilePath is a typedef for String
         children: children,
       ) as LabelsEntityRootLabel;
     }).toList();
@@ -39,34 +40,36 @@ class MapStringsHierarchyUsecase implements IMapStringsHierarchyUsecase {
   // Build children for a parent string (either root or child)
   List<LabelsEntity> _buildChildren(
     HardcodedString parent,
-    List<HardcodedString> allChildStrings,
+    List<MapEntry<TranslationKey, HardcodedString>> allChildStrings,
     List<HardcodedStringDynamicValue> dynamicValues,
+    Map<TranslationKey, HardcodedString> strings,
   ) {
     final List<LabelsEntity> children = [];
     
     // Find child strings that are inside this parent's range
-    final directChildStrings = allChildStrings.where((child) {
-      return child.parentStartIndex != null &&
-             child.parentEndIndex != null &&
-             child.parentStartIndex! >= parent.fileStartIndex &&
-             child.parentEndIndex! <= parent.fileEndIndex;
+    final directChildStrings = allChildStrings.where((entry) {
+      return entry.value.parentStartIndex != null &&
+             entry.value.parentEndIndex != null &&
+             entry.value.parentStartIndex! >= parent.fileStartIndex &&
+             entry.value.parentEndIndex! <= parent.fileEndIndex;
     }).toList();
     
     // Create child labels for each direct child string
-    for (final childString in directChildStrings) {
+    for (final childEntry in directChildStrings) {
       // Find children for this child string
       final grandchildren = _buildChildren(
-        childString, 
+        childEntry.value, 
         allChildStrings, 
-        childString.dynamicFields,
+        childEntry.value.dynamicFields,
+        strings,
       );
       
       children.add(LabelsEntity.childLabel(
-        l10nKey: childString.value, // L10nKey is a typedef for String
-        l10nValue: childString.value, // L10nValue is a typedef for String
-        parentStartIndex: childString.parentStartIndex!,
-        parentEndIndex: childString.parentEndIndex!,
-        filePath: childString.filePath, // FilePath is a typedef for String
+        l10nKey: childEntry.key, // TranslationKey
+        l10nValue: childEntry.value.value, // Original string value
+        parentStartIndex: childEntry.value.parentStartIndex!,
+        parentEndIndex: childEntry.value.parentEndIndex!,
+        filePath: childEntry.value.filePath, // FilePath is a typedef for String
         children: grandchildren,
       ));
     }
@@ -114,33 +117,34 @@ class MapStringsHierarchyUsecase implements IMapStringsHierarchyUsecase {
   // Build children for a dynamic value
   List<LabelsEntity> _buildDynamicValueChildren(
     HardcodedStringDynamicValue dynamicValue,
-    List<HardcodedString> allChildStrings,
+    List<MapEntry<TranslationKey, HardcodedString>> allChildStrings,
   ) {
     final List<LabelsEntity> children = [];
     
     // Find child strings that are inside this dynamic value's range
-    final directChildStrings = allChildStrings.where((child) {
-      return child.parentStartIndex != null &&
-             child.parentEndIndex != null &&
-             child.parentStartIndex! >= dynamicValue.fileStartIndex &&
-             child.parentEndIndex! <= dynamicValue.fileEndIndex;
+    final directChildStrings = allChildStrings.where((entry) {
+      return entry.value.parentStartIndex != null &&
+             entry.value.parentEndIndex != null &&
+             entry.value.parentStartIndex! >= dynamicValue.fileStartIndex &&
+             entry.value.parentEndIndex! <= dynamicValue.fileEndIndex;
     }).toList();
     
     // Create child labels for each direct child string
-    for (final childString in directChildStrings) {
+    for (final childEntry in directChildStrings) {
       // Find children for this child string
       final grandchildren = _buildChildren(
-        childString, 
+        childEntry.value, 
         allChildStrings, 
-        childString.dynamicFields,
+        childEntry.value.dynamicFields,
+        allChildStrings.fold({}, (map, entry) => map..[entry.key] = entry.value),
       );
       
       children.add(LabelsEntity.childLabel(
-        l10nKey: childString.value, // L10nKey is a typedef for String
-        l10nValue: childString.value, // L10nValue is a typedef for String
-        parentStartIndex: childString.parentStartIndex!,
-        parentEndIndex: childString.parentEndIndex!,
-        filePath: childString.filePath, // FilePath is a typedef for String
+        l10nKey: childEntry.key, // TranslationKey
+        l10nValue: childEntry.value.value, // Original string value
+        parentStartIndex: childEntry.value.parentStartIndex!,
+        parentEndIndex: childEntry.value.parentEndIndex!,
+        filePath: childEntry.value.filePath, // FilePath is a typedef for String
         children: grandchildren,
       ));
     }

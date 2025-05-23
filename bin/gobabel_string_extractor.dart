@@ -67,10 +67,6 @@ void main(List<String> args) async {
     'build',
     'web',
     'windows',
-    // Common development/build folders you might also want to exclude:
-    // '.git',
-    // '.dart_tool',
-    // '.idea',
   ];
 
   final files = dir.listSync(recursive: true).whereType<File>().where((file) {
@@ -84,7 +80,15 @@ void main(List<String> args) async {
       // ex: .dart_tool
       final segmentContainPrivateFolder =
           segment.contains('/.') || segment.startsWith('.');
-      if (segmentContainExcludeFolder || segmentContainPrivateFolder) {
+
+      final isFreezedFile = file.path.endsWith('.freezed.dart');
+      final isPartFile = file.path.endsWith('.part.dart');
+      final isGeneratedFile = file.path.endsWith('.g.dart');
+      if (segmentContainExcludeFolder ||
+          segmentContainPrivateFolder ||
+          isFreezedFile ||
+          isPartFile ||
+          isGeneratedFile) {
         return false; // Exclude this file if any part of its path is in excludedFolders
       }
     }
@@ -128,7 +132,7 @@ void main(List<String> args) async {
   print('Mapping string hierarchy...');
   final mapStringsHierarchyUsecase = MapStringsHierarchyUsecase();
   final labelEntities = await mapStringsHierarchyUsecase.call(
-    strings: labelStrings,
+    strings: keyedStrings,
   );
   print('Created hierarchy with ${labelEntities.length} root labels');
 
