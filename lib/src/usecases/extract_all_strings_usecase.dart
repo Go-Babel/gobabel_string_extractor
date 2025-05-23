@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
+import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_dynamic_value_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
+import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.dart';
 
 abstract class IExtractAllStringsUsecase {
   /// Extracts all hardcoded strings from a given list of files
@@ -13,16 +15,21 @@ abstract class IExtractAllStringsUsecase {
 
 /// Implementation of IExtractAllStringsUsecase that extracts strings from Dart files
 class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
+  final ValidateCandidateStringUsecase validateCandidateStringUsecase;
+  const ExtractAllStringsInDartUsecaseImpl({
+    required this.validateCandidateStringUsecase,
+  });
+
   @override
   Future<List<HardcodedString>> call({required List<File> files}) async {
     final List<HardcodedString> allStrings = [];
-    
+
     for (final file in files) {
       if (!file.path.endsWith('.dart')) continue;
-      
+
       final content = await file.readAsString();
       final rawList = <_RawString>[];
-      
+
       try {
         final unit = parseString(content: content, path: file.path).unit;
         unit.accept(_RawStringScanner(file.path, content, rawList));
@@ -30,10 +37,10 @@ class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
         // Skip files that can't be parsed
         continue;
       }
-      
+
       // Sort rawList by start position ascending
       rawList.sort((a, b) => a.start.compareTo(b.start));
-      
+
       // For each raw string, find parent raw if any
       for (var raw in rawList) {
         _RawString? parent;
@@ -46,10 +53,15 @@ class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
             }
           }
         }
-        
+
         final parentStart = parent != null ? raw.start - parent.start : null;
         final parentEnd = parent != null ? raw.end - parent.start : null;
-        
+
+        final isValid = validateCandidateStringUsecase.call(
+          content: raw.stringValue?.trimHardcodedString ?? '',
+        );
+        if (!isValid) continue;
+
         allStrings.add(
           HardcodedString(
             value: raw.stringValue ?? '',
@@ -63,7 +75,7 @@ class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
         );
       }
     }
-    
+
     return allStrings;
   }
 }

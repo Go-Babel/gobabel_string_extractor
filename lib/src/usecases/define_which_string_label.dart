@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
+import 'package:path/path.dart' as p;
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
@@ -39,15 +43,19 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
     final Map<String, String> extractedStrings = {};
     for (final string in strings) {
       final key = generateSha1(string.value);
-      extractedStrings[key] = string.value;
+      extractedStrings[key] = string.value.trimHardcodedString;
     }
 
     // Split the strings into manageable groups for API requests
     final groups = splitIntoManageableGroupsForApi(extractedStrings);
-    
+    final outFile = File(
+      p.join(Directory.current.path, 'splitable_is_valid_strings.json'),
+    );
+    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(groups));
+
     // Process each group and combine results
     final Map<String, bool> combinedResults = {};
-    
+
     for (final group in groups) {
       // Call the server endpoint to analyze if strings are displayable labels
       final result = await _client.publicArbHelpers
@@ -56,7 +64,7 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
             projectShaIdentifier: projectShaIdentifier,
             extractedStrings: group,
           );
-      
+
       // Add results to the combined results map
       combinedResults.addAll(result);
     }

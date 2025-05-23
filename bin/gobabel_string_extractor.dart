@@ -6,6 +6,7 @@ import 'package:gobabel_string_extractor/src/usecases/create_human_friendly_arb_
 import 'package:gobabel_string_extractor/src/usecases/define_which_string_label.dart';
 import 'package:gobabel_string_extractor/src/usecases/extract_all_strings_usecase.dart';
 import 'package:gobabel_string_extractor/src/usecases/map_strings_hierarchy.dart';
+import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.dart';
 import 'package:path/path.dart' as p;
 
 void main(List<String> args) async {
@@ -48,12 +49,47 @@ void main(List<String> args) async {
   }
 
   // Create HTTP client
-  final Client client = Client('http://localhost:8080/');
+  final Client client = Client(
+    'http://localhost:8080/',
+    connectionTimeout: const Duration(seconds: 60),
+  );
 
   // 1. Extract all strings from the directory
   print('Extracting strings from ${dir.path}...');
-  final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl();
-  final files = dir.listSync(recursive: true).whereType<File>().toList();
+  final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl(
+    validateCandidateStringUsecase: ValidateCandidateStringUsecase(),
+  );
+  const excludedFolders = [
+    'android',
+    'ios',
+    'linux',
+    'macos',
+    'build',
+    'web',
+    'windows',
+    // Common development/build folders you might also want to exclude:
+    // '.git',
+    // '.dart_tool',
+    // '.idea',
+  ];
+
+  final files = dir.listSync(recursive: true).whereType<File>().where((file) {
+    // Normalize path separators for consistent splitting, then split into segments
+    final pathSegments = p.split(file.path.replaceAll(r'\', '/'));
+    for (final segment in pathSegments) {
+      final segmentContainExcludeFolder = excludedFolders.any(
+        (folder) => segment.contains(folder),
+      );
+
+      // ex: .dart_tool
+      final segmentContainPrivateFolder =
+          segment.contains('/.') || segment.startsWith('.');
+      if (segmentContainExcludeFolder || segmentContainPrivateFolder) {
+        return false; // Exclude this file if any part of its path is in excludedFolders
+      }
+    }
+    return true; // Include this file
+  }).toList();
   final allStrings = await extractAllStringsUsecase.call(files: files);
   print('Extracted ${allStrings.length} raw strings');
   final onlyStrings = allStrings.map((s) => s.toMap()).toList();
@@ -98,7 +134,9 @@ void main(List<String> args) async {
 
   // Save the result to strings.json
   final jsonList = labelEntities.map((label) => label.toJson()).toList();
-  final outFile = File(p.join(Directory.current.path, 'strings.json'));
+  final outFile = File(
+    p.join(Directory.current.path, 'translated_result.json'),
+  );
   outFile.writeAsStringSync(JsonEncoder.withIndent('  ').convert(jsonList));
   print('Saved results to ${outFile.path}');
 
