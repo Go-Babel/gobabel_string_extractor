@@ -1,11 +1,10 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gobabel_core/gobabel_core.dart';
-import 'package:gobabel_string_extractor/src/entities/labels_entity.dart';
 
 part 'babel_label_entity.freezed.dart';
 
 @freezed
-abstract class BabelLabelEntity with _$BabelLabelEntity {
+sealed class BabelLabelEntity with _$BabelLabelEntity {
   factory BabelLabelEntity.rootLabel({
     required L10nKey l10nKey,
     required L10nValue l10nValue,
@@ -14,18 +13,18 @@ abstract class BabelLabelEntity with _$BabelLabelEntity {
     required int fileStartIndex,
     required int fileEndIndex,
     required String filePath,
-    required List<LabelsEntity> children,
+    required List<BabelLabelEntity> children,
   }) = BabelLabelEntityRootLabel;
 
   factory BabelLabelEntity.childLabel({
-    required L10nKey l10nKey,
+    required L10nKey l10nKey, // ✅ CHECK
     required L10nValue l10nValue,
     required BabelFunctionDeclaration babelFunctionDeclaration,
     required BabelFunctionImplementation babelFunctionImplementation,
-    required int parentStartIndex,
-    required int parentEndIndex,
+    required int parentStartIndex, // ✅ CHECK
+    required int parentEndIndex, // ✅ CHECK
     required String filePath,
-    required List<LabelsEntity> children,
+    required List<BabelLabelEntity> children,
   }) = BabelLabelEntityChildLabel;
 
   factory BabelLabelEntity.labelDynamicValue({
@@ -33,6 +32,6 @@ abstract class BabelLabelEntity with _$BabelLabelEntity {
     required int parentStartIndex,
     required int parentEndIndex,
     required String filePath,
-    required List<LabelsEntity> children,
+    required List<BabelLabelEntity> children,
   }) = BabelLabelEntityLabelDynamicValue;
 }

@@ -21,12 +21,12 @@ dependencies:
     path: ../go_babel_app/gobabel_client
   gobabel_core:
     path: ../gobabel_core
-  freezed_annotation: ^3.0.0
+  freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
 
 dev_dependencies:
   build_runner: ^2.4.15
-  freezed: ^3.0.6
+  freezed: ^2.5.8
   json_serializable: ^6.9.5
   lints: ^6.0.0
   test: ^1.26.2

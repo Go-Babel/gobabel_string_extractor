@@ -27,4 +27,8 @@ extension StringExtension on String {
 
     return this;
   }
+
+  String get formatToComment {
+    return '  /// ${replaceAll(RegExp('\n'), '<p>\n/// ')}';
+  }
 }

@@ -6,9 +6,9 @@ part of 'labels_entity.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-LabelsEntityRootLabel _$LabelsEntityRootLabelFromJson(
+_$LabelsEntityRootLabelImpl _$$LabelsEntityRootLabelImplFromJson(
   Map<String, dynamic> json,
-) => LabelsEntityRootLabel(
+) => _$LabelsEntityRootLabelImpl(
   l10nKey: json['l10nKey'] as String,
   l10nValue: json['l10nValue'] as String,
   fileStartIndex: (json['fileStartIndex'] as num).toInt(),
@@ -20,8 +20,8 @@ LabelsEntityRootLabel _$LabelsEntityRootLabelFromJson(
   $type: json['runtimeType'] as String?,
 );
 
-Map<String, dynamic> _$LabelsEntityRootLabelToJson(
-  LabelsEntityRootLabel instance,
+Map<String, dynamic> _$$LabelsEntityRootLabelImplToJson(
+  _$LabelsEntityRootLabelImpl instance,
 ) => <String, dynamic>{
   'l10nKey': instance.l10nKey,
   'l10nValue': instance.l10nValue,
@@ -32,9 +32,9 @@ Map<String, dynamic> _$LabelsEntityRootLabelToJson(
   'runtimeType': instance.$type,
 };
 
-LabelsEntityChildLabel _$LabelsEntityChildLabelFromJson(
+_$LabelsEntityChildLabelImpl _$$LabelsEntityChildLabelImplFromJson(
   Map<String, dynamic> json,
-) => LabelsEntityChildLabel(
+) => _$LabelsEntityChildLabelImpl(
   l10nKey: json['l10nKey'] as String,
   l10nValue: json['l10nValue'] as String,
   parentStartIndex: (json['parentStartIndex'] as num).toInt(),
@@ -46,8 +46,8 @@ LabelsEntityChildLabel _$LabelsEntityChildLabelFromJson(
   $type: json['runtimeType'] as String?,
 );
 
-Map<String, dynamic> _$LabelsEntityChildLabelToJson(
-  LabelsEntityChildLabel instance,
+Map<String, dynamic> _$$LabelsEntityChildLabelImplToJson(
+  _$LabelsEntityChildLabelImpl instance,
 ) => <String, dynamic>{
   'l10nKey': instance.l10nKey,
   'l10nValue': instance.l10nValue,
@@ -58,21 +58,21 @@ Map<String, dynamic> _$LabelsEntityChildLabelToJson(
   'runtimeType': instance.$type,
 };
 
-LabelsEntityLabelDynamicValue _$LabelsEntityLabelDynamicValueFromJson(
-  Map<String, dynamic> json,
-) => LabelsEntityLabelDynamicValue(
-  content: json['content'] as String,
-  parentStartIndex: (json['parentStartIndex'] as num).toInt(),
-  parentEndIndex: (json['parentEndIndex'] as num).toInt(),
-  filePath: json['filePath'] as String,
-  children: (json['children'] as List<dynamic>)
-      .map((e) => LabelsEntity.fromJson(e as Map<String, dynamic>))
-      .toList(),
-  $type: json['runtimeType'] as String?,
-);
+_$LabelsEntityLabelDynamicValueImpl
+_$$LabelsEntityLabelDynamicValueImplFromJson(Map<String, dynamic> json) =>
+    _$LabelsEntityLabelDynamicValueImpl(
+      content: json['content'] as String,
+      parentStartIndex: (json['parentStartIndex'] as num).toInt(),
+      parentEndIndex: (json['parentEndIndex'] as num).toInt(),
+      filePath: json['filePath'] as String,
+      children: (json['children'] as List<dynamic>)
+          .map((e) => LabelsEntity.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      $type: json['runtimeType'] as String?,
+    );
 
-Map<String, dynamic> _$LabelsEntityLabelDynamicValueToJson(
-  LabelsEntityLabelDynamicValue instance,
+Map<String, dynamic> _$$LabelsEntityLabelDynamicValueImplToJson(
+  _$LabelsEntityLabelDynamicValueImpl instance,
 ) => <String, dynamic>{
   'content': instance.content,
   'parentStartIndex': instance.parentStartIndex,

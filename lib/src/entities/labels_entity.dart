@@ -5,7 +5,7 @@ part 'labels_entity.freezed.dart';
 part 'labels_entity.g.dart';
 
 @freezed
-abstract class LabelsEntity with _$LabelsEntity {
+sealed class LabelsEntity with _$LabelsEntity {
   factory LabelsEntity.rootLabel({
     required L10nKey l10nKey,
     required L10nValue l10nValue,
