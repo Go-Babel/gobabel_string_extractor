@@ -5,6 +5,7 @@ import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/usecases/create_human_friendly_arb_keys.dart';
 import 'package:gobabel_string_extractor/src/usecases/define_which_string_label.dart';
 import 'package:gobabel_string_extractor/src/usecases/extract_all_strings_usecase.dart';
+import 'package:gobabel_string_extractor/src/usecases/map_babel_labels.dart';
 import 'package:gobabel_string_extractor/src/usecases/map_strings_hierarchy.dart';
 import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.dart';
 import 'package:path/path.dart' as p;
@@ -130,14 +131,19 @@ void main(List<String> args) async {
 
   // 4. Map strings hierarchy
   print('Mapping string hierarchy...');
-  final mapStringsHierarchyUsecase = MapStringsHierarchyUsecase();
+  final mapStringsHierarchyUsecase = MapStringsHierarchyUsecaseImpl();
   final labelEntities = await mapStringsHierarchyUsecase.call(
     strings: keyedStrings,
   );
   print('Created hierarchy with ${labelEntities.length} root labels');
 
+  // 5. Map to babel labels models
+  final mapBabelLabelsUsecaseImpl = MapBabelLabelsUsecaseImpl();
+  final babelLabels = mapBabelLabelsUsecaseImpl(strings: labelEntities);
+
   // Save the result to strings.json
-  final jsonList = labelEntities.map((label) => label.toJson()).toList();
+  final jsonList = babelLabels.map((label) => label.toJson()).toList();
+  // final jsonList = labelEntities.map((label) => label.toJson()).toList();
   final outFile = File(
     p.join(Directory.current.path, 'translated_result.json'),
   );

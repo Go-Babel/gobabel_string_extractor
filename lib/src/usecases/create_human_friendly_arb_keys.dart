@@ -73,11 +73,71 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     for (final string in strings) {
       final sha1Key = generateSha1(string.value);
       if (combinedResults.containsKey(sha1Key)) {
-        final arbKey = combinedResults[sha1Key]!;
+        final arbKey = combinedResults[sha1Key]!.toCamelCaseOrEmpty;
         keyMap[arbKey] = string;
       }
     }
 
     return keyMap;
+  }
+}
+
+extension StringCamelCaseExtension on String {
+  /// Transforms the string to camelCase.
+  ///
+  /// - Trims leading/trailing whitespace.
+  /// - Splits by spaces, hyphens, or underscores.
+  /// - The first word is converted to lowercase.
+  /// - Subsequent words have their first letter capitalized and the rest lowercased.
+  ///
+  /// If the original string (after trimming) or the resulting camelCase string
+  /// is empty, it returns "emptyVariable".
+  String get toCamelCaseOrEmpty {
+    if (CaseIdentifyRegex.isCamelCase(trim())) {
+      return this;
+    }
+    // 1. Check if the original string is "empty" (after trimming)
+    final trimmedOriginal = trim();
+    if (trimmedOriginal.isEmpty) {
+      return "emptyVariable";
+    }
+
+    // 2. Split into words using common delimiters (space, hyphen, underscore)
+    //    The regex r'[\s_-]+' matches one or more whitespace characters, underscores, or hyphens.
+    //    Filter out empty strings that might result from multiple delimiters together (e.g., "hello--world").
+    List<String> words = trimmedOriginal
+        .split(RegExp(r'[\s_-]+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    // 3. If no valid words are found after splitting (e.g., input was "---" or "_ _")
+    //    This means the potential camelCase result would be empty.
+    if (words.isEmpty) {
+      return "emptyVariable";
+    }
+
+    // 4. Construct the camelCase string
+    //    The first word is all lowercase.
+    String camelCaseResult = words.first.toLowerCase();
+
+    //    For subsequent words, capitalize the first letter and lowercase the rest.
+    for (int i = 1; i < words.length; i++) {
+      String word = words[i];
+      // This check is technically redundant due to the .where((part) => part.isNotEmpty) above,
+      // but good for clarity if logic changes.
+      if (word.isNotEmpty) {
+        camelCaseResult +=
+            word[0].toUpperCase() + word.substring(1).toLowerCase();
+      }
+    }
+
+    // 5. Final check on the result (though `words.isEmpty` should cover this)
+    //    This ensures that if somehow the camelCaseResult ended up empty (highly unlikely
+    //    if `words` was not empty), it still returns "emptyVariable".
+    if (camelCaseResult.isEmpty) {
+      return "emptyVariable";
+    }
+
+    return camelCaseResult;
   }
 }

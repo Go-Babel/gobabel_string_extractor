@@ -9,7 +9,7 @@ abstract class IMapStringsHierarchyUsecase {
   });
 }
 
-class MapStringsHierarchyUsecase implements IMapStringsHierarchyUsecase {
+class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
   @override
   Future<List<LabelsEntityRootLabel>> call({
     required Map<TranslationKey, HardcodedStringEntity> strings,

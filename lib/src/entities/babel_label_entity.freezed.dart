@@ -15,6 +15,25 @@ final _privateConstructorUsedError = UnsupportedError(
   'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models',
 );
 
+BabelLabelEntity _$BabelLabelEntityFromJson(Map<String, dynamic> json) {
+  switch (json['runtimeType']) {
+    case 'rootLabel':
+      return BabelLabelEntityRootLabel.fromJson(json);
+    case 'childLabel':
+      return BabelLabelEntityChildLabel.fromJson(json);
+    case 'labelDynamicValue':
+      return BabelLabelEntityLabelDynamicValue.fromJson(json);
+
+    default:
+      throw CheckedFromJsonException(
+        json,
+        'runtimeType',
+        'BabelLabelEntity',
+        'Invalid union type "${json['runtimeType']}"!',
+      );
+  }
+}
+
 /// @nodoc
 mixin _$BabelLabelEntity {
   List<BabelLabelEntity> get children => throw _privateConstructorUsedError;
@@ -134,6 +153,9 @@ mixin _$BabelLabelEntity {
     labelDynamicValue,
     required TResult orElse(),
   }) => throw _privateConstructorUsedError;
+
+  /// Serializes this BabelLabelEntity to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of BabelLabelEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -264,7 +286,7 @@ class __$$BabelLabelEntityRootLabelImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
   _$BabelLabelEntityRootLabelImpl({
     required this.l10nKey,
@@ -275,7 +297,12 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
     required this.fileEndIndex,
     required this.filePath,
     required final List<BabelLabelEntity> children,
-  }) : _children = children;
+    final String? $type,
+  }) : _children = children,
+       $type = $type ?? 'rootLabel';
+
+  factory _$BabelLabelEntityRootLabelImpl.fromJson(Map<String, dynamic> json) =>
+      _$$BabelLabelEntityRootLabelImplFromJson(json);
 
   @override
   final String l10nKey;
@@ -298,6 +325,9 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_children);
   }
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
 
   @override
   String toString() {
@@ -332,6 +362,7 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
             const DeepCollectionEquality().equals(other._children, _children));
   }
 
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
     runtimeType,
@@ -528,6 +559,11 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
     }
     return orElse();
   }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$BabelLabelEntityRootLabelImplToJson(this);
+  }
 }
 
 abstract class BabelLabelEntityRootLabel implements BabelLabelEntity {
@@ -541,6 +577,9 @@ abstract class BabelLabelEntityRootLabel implements BabelLabelEntity {
     required final String filePath,
     required final List<BabelLabelEntity> children,
   }) = _$BabelLabelEntityRootLabelImpl;
+
+  factory BabelLabelEntityRootLabel.fromJson(Map<String, dynamic> json) =
+      _$BabelLabelEntityRootLabelImpl.fromJson;
 
   String get l10nKey;
   String get l10nValue;
@@ -639,7 +678,7 @@ class __$$BabelLabelEntityChildLabelImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
   _$BabelLabelEntityChildLabelImpl({
     required this.l10nKey,
@@ -649,7 +688,13 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
     required this.parentStartIndex,
     required this.parentEndIndex,
     required final List<BabelLabelEntity> children,
-  }) : _children = children;
+    final String? $type,
+  }) : _children = children,
+       $type = $type ?? 'childLabel';
+
+  factory _$BabelLabelEntityChildLabelImpl.fromJson(
+    Map<String, dynamic> json,
+  ) => _$$BabelLabelEntityChildLabelImplFromJson(json);
 
   @override
   final String l10nKey;
@@ -674,6 +719,9 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_children);
   }
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
 
   @override
   String toString() {
@@ -706,6 +754,7 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
             const DeepCollectionEquality().equals(other._children, _children));
   }
 
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
     runtimeType,
@@ -898,6 +947,11 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
     }
     return orElse();
   }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$BabelLabelEntityChildLabelImplToJson(this);
+  }
 }
 
 abstract class BabelLabelEntityChildLabel implements BabelLabelEntity {
@@ -910,6 +964,9 @@ abstract class BabelLabelEntityChildLabel implements BabelLabelEntity {
     required final int parentEndIndex,
     required final List<BabelLabelEntity> children,
   }) = _$BabelLabelEntityChildLabelImpl;
+
+  factory BabelLabelEntityChildLabel.fromJson(Map<String, dynamic> json) =
+      _$BabelLabelEntityChildLabelImpl.fromJson;
 
   String get l10nKey; // ✅ CHECK
   String get l10nValue;
@@ -992,7 +1049,7 @@ class __$$BabelLabelEntityLabelDynamicValueImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _$BabelLabelEntityLabelDynamicValueImpl
     implements BabelLabelEntityLabelDynamicValue {
   _$BabelLabelEntityLabelDynamicValueImpl({
@@ -1000,7 +1057,13 @@ class _$BabelLabelEntityLabelDynamicValueImpl
     required this.parentStartIndex,
     required this.parentEndIndex,
     required final List<BabelLabelEntity> children,
-  }) : _children = children;
+    final String? $type,
+  }) : _children = children,
+       $type = $type ?? 'labelDynamicValue';
+
+  factory _$BabelLabelEntityLabelDynamicValueImpl.fromJson(
+    Map<String, dynamic> json,
+  ) => _$$BabelLabelEntityLabelDynamicValueImplFromJson(json);
 
   @override
   final String content;
@@ -1015,6 +1078,9 @@ class _$BabelLabelEntityLabelDynamicValueImpl
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_children);
   }
+
+  @JsonKey(name: 'runtimeType')
+  final String $type;
 
   @override
   String toString() {
@@ -1034,6 +1100,7 @@ class _$BabelLabelEntityLabelDynamicValueImpl
             const DeepCollectionEquality().equals(other._children, _children));
   }
 
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
     runtimeType,
@@ -1216,6 +1283,11 @@ class _$BabelLabelEntityLabelDynamicValueImpl
     }
     return orElse();
   }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$BabelLabelEntityLabelDynamicValueImplToJson(this);
+  }
 }
 
 abstract class BabelLabelEntityLabelDynamicValue implements BabelLabelEntity {
@@ -1225,6 +1297,10 @@ abstract class BabelLabelEntityLabelDynamicValue implements BabelLabelEntity {
     required final int parentEndIndex,
     required final List<BabelLabelEntity> children,
   }) = _$BabelLabelEntityLabelDynamicValueImpl;
+
+  factory BabelLabelEntityLabelDynamicValue.fromJson(
+    Map<String, dynamic> json,
+  ) = _$BabelLabelEntityLabelDynamicValueImpl.fromJson;
 
   String get content;
   int get parentStartIndex;
