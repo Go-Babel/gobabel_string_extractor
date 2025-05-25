@@ -1,13 +1,6 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:gobabel_client/gobabel_client.dart';
-import 'package:gobabel_string_extractor/src/usecases/create_human_friendly_arb_keys.dart';
-import 'package:gobabel_string_extractor/src/usecases/define_which_string_label.dart';
-import 'package:gobabel_string_extractor/src/usecases/extract_all_strings_usecase.dart';
-import 'package:gobabel_string_extractor/src/usecases/map_babel_labels.dart';
-import 'package:gobabel_string_extractor/src/usecases/map_strings_hierarchy.dart';
-import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.dart';
+import 'package:gobabel_string_extractor/src/gobabel_string_extractor_controller.dart';
 import 'package:path/path.dart' as p;
 
 void main(List<String> args) async {
@@ -19,6 +12,11 @@ void main(List<String> args) async {
       'project-sha-identifier',
       abbr: 's',
       help: 'Project SHA identifier',
+    )
+    ..addOption(
+      'api-base-url',
+      defaultsTo: 'http://localhost:8080/',
+      help: 'Base URL for the API',
     );
 
   ArgResults res;
@@ -30,9 +28,10 @@ void main(List<String> args) async {
   }
 
   // Get required parameters
-  final target = res['path'] as String?;
+  final targetDir = res['path'] as String?;
   final projectApiToken = res['api-key'] as String?;
   final projectShaIdentifier = res['project-sha-identifier'] as String?;
+  final apiBaseUrl = res['api-base-url'] as String;
 
   if (projectApiToken == null || projectShaIdentifier == null) {
     stderr.writeln('Error: Project API token and SHA identifier are required');
@@ -43,34 +42,48 @@ void main(List<String> args) async {
   }
 
   // Validate directory
-  final dir = target == null ? Directory.current : Directory(target);
+  final dir = targetDir == null ? Directory.current : Directory(targetDir);
   if (!dir.existsSync()) {
-    stderr.writeln('Directory not found: $target');
+    stderr.writeln('Error: Directory not found: $targetDir');
     exit(1);
   }
 
-  // Create HTTP client
-  final Client client = Client(
-    'http://localhost:8080/',
-    connectionTimeout: const Duration(seconds: 60),
-  );
+  try {
+    // Get eligible files for scanning
+    print('Finding eligible files in ${dir.path}...');
+    final files = getEligibleFiles(dir);
+    print('Found ${files.length} eligible files for scanning');
 
-  // 1. Extract all strings from the directory
-  print('Extracting strings from ${dir.path}...');
-  final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl(
-    validateCandidateStringUsecase: ValidateCandidateStringUsecase(),
-  );
-  const excludedFolders = [
-    'android',
-    'ios',
-    'linux',
-    'macos',
-    'build',
-    'web',
-    'windows',
-  ];
+    // Process the files
+    final controller = GobabelStringExtractorController();
+    await controller.extractAndProcessStrings(
+      files: files,
+      projectApiToken: projectApiToken,
+      projectShaIdentifier: projectShaIdentifier,
+      apiBaseUrl: apiBaseUrl,
+    );
+    print('String extraction completed successfully.');
+  } catch (e) {
+    stderr.writeln('Error during string extraction: $e');
+    exit(1);
+  }
+}
 
-  final files = dir.listSync(recursive: true).whereType<File>().where((file) {
+/// List of folders to exclude from scanning
+const List<String> excludedFolders = [
+  'android',
+  'ios',
+  'linux',
+  'macos',
+  'build',
+  'web',
+  'windows',
+  'test',
+];
+
+/// Gets eligible files for string extraction from the directory
+List<File> getEligibleFiles(Directory dir) {
+  return dir.listSync(recursive: true).whereType<File>().where((file) {
     // Normalize path separators for consistent splitting, then split into segments
     final pathSegments = p.split(file.path.replaceAll(r'\', '/'));
     for (final segment in pathSegments) {
@@ -90,68 +103,11 @@ void main(List<String> args) async {
           isFreezedFile ||
           isPartFile ||
           isGeneratedFile) {
-        return false; // Exclude this file if any part of its path is in excludedFolders
+        return false; // Exclude this file
       }
     }
-    return true; // Include this file
+
+    // Only include Dart files
+    return file.path.endsWith('.dart');
   }).toList();
-  final allStrings = await extractAllStringsUsecase.call(files: files);
-  print('Extracted ${allStrings.length} raw strings');
-  final onlyStrings = allStrings.map((s) => s.toMap()).toList();
-  final stringsOutFile = File(p.join(Directory.current.path, 'strings.json'));
-  await stringsOutFile.writeAsString(
-    JsonEncoder.withIndent('  ').convert(onlyStrings),
-  );
-
-  // 2. Define which strings are labels
-  print('Analyzing which strings are displayable labels...');
-  final defineWhichStringLabelUsecase =
-      DefineWhichStringLabelWithAiOnServerUsecaseImpl(
-        projectApiToken: projectApiToken,
-        projectShaIdentifier: BigInt.parse(projectShaIdentifier),
-        client: client,
-      );
-  final labelStrings = await defineWhichStringLabelUsecase.call(
-    strings: allStrings,
-  );
-  print('Found ${labelStrings.length} displayable labels');
-
-  // 3. Create human-friendly ARB keys
-  print('Creating human-friendly ARB keys...');
-  final createHumanFriendlyArbKeysUsecase =
-      CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl(
-        projectApiToken: projectApiToken,
-        projectShaIdentifier: BigInt.parse(projectShaIdentifier),
-        client: client,
-      );
-  final keyedStrings = await createHumanFriendlyArbKeysUsecase.call(
-    strings: labelStrings,
-  );
-  print('Created ${keyedStrings.length} ARB keys');
-
-  // 4. Map strings hierarchy
-  print('Mapping string hierarchy...');
-  final mapStringsHierarchyUsecase = MapStringsHierarchyUsecaseImpl();
-  final labelEntities = await mapStringsHierarchyUsecase.call(
-    strings: keyedStrings,
-  );
-  print('Created hierarchy with ${labelEntities.length} root labels');
-
-  // 5. Map to babel labels models
-  final mapBabelLabelsUsecaseImpl = MapBabelLabelsUsecaseImpl();
-  final babelLabels = mapBabelLabelsUsecaseImpl(strings: labelEntities);
-
-  // Save the result to strings.json
-  final jsonList = babelLabels.map((label) => label.toJson()).toList();
-  // final jsonList = labelEntities.map((label) => label.toJson()).toList();
-  final outFile = File(
-    p.join(Directory.current.path, 'translated_result.json'),
-  );
-  outFile.writeAsStringSync(JsonEncoder.withIndent('  ').convert(jsonList));
-  print('Saved results to ${outFile.path}');
-
-  /*
-  
-   
-  */
 }
