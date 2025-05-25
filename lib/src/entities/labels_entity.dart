@@ -8,7 +8,7 @@ part 'labels_entity.g.dart';
 sealed class LabelsEntity with _$LabelsEntity {
   factory LabelsEntity.rootLabel({
     required L10nKey l10nKey,
-    required L10nValue l10nValue,
+    required HardcodedStringLabel hardcodedString,
     required int fileStartIndex,
     required int fileEndIndex,
     required FilePath filePath,
@@ -17,10 +17,9 @@ sealed class LabelsEntity with _$LabelsEntity {
 
   factory LabelsEntity.childLabel({
     required L10nKey l10nKey,
-    required L10nValue l10nValue,
+    required HardcodedStringLabel hardcodedString,
     required int parentStartIndex,
     required int parentEndIndex,
-    required FilePath filePath,
     required List<LabelsEntity> children,
   }) = LabelsEntityChildLabel;
 
@@ -28,10 +27,11 @@ sealed class LabelsEntity with _$LabelsEntity {
     required String content,
     required int parentStartIndex,
     required int parentEndIndex,
-    required FilePath filePath,
     required List<LabelsEntity> children,
   }) = LabelsEntityLabelDynamicValue;
 
   factory LabelsEntity.fromJson(Map<String, dynamic> map) =>
       _$LabelsEntityFromJson(map);
 }
+
+typedef HardcodedStringLabel = String;

@@ -10,7 +10,7 @@ import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.
 
 abstract class IExtractAllStringsUsecase {
   /// Extracts all hardcoded strings from a given list of files
-  Future<List<HardcodedString>> call({required List<File> files});
+  Future<List<HardcodedStringEntity>> call({required List<File> files});
 }
 
 /// Implementation of IExtractAllStringsUsecase that extracts strings from Dart files
@@ -21,8 +21,8 @@ class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
   });
 
   @override
-  Future<List<HardcodedString>> call({required List<File> files}) async {
-    final List<HardcodedString> allStrings = [];
+  Future<List<HardcodedStringEntity>> call({required List<File> files}) async {
+    final List<HardcodedStringEntity> allStrings = [];
 
     for (final file in files) {
       if (!file.path.endsWith('.dart')) continue;
@@ -63,7 +63,7 @@ class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
         if (!isValid) continue;
 
         allStrings.add(
-          HardcodedString(
+          HardcodedStringEntity(
             value: raw.stringValue ?? '',
             filePath: raw.filePath,
             parentStartIndex: parentStart,

@@ -23,15 +23,13 @@ sealed class BabelLabelEntity with _$BabelLabelEntity {
     required BabelFunctionImplementation babelFunctionImplementation,
     required int parentStartIndex, // ✅ CHECK
     required int parentEndIndex, // ✅ CHECK
-    required String filePath,
-    required List<BabelLabelEntity> children,
+    required List<BabelLabelEntity> children, // ✅ CHECK
   }) = BabelLabelEntityChildLabel;
 
   factory BabelLabelEntity.labelDynamicValue({
     required String content,
     required int parentStartIndex,
     required int parentEndIndex,
-    required String filePath,
     required List<BabelLabelEntity> children,
   }) = BabelLabelEntityLabelDynamicValue;
 }

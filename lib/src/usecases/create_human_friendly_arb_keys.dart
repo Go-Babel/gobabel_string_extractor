@@ -14,8 +14,8 @@ abstract class ICreateHumanFriendlyArbKeysUsecase {
   /// 2. Use camelCase format (first word lowercase, subsequent words capitalized, no spaces or underscores)
   /// 3. Accurately represent the content's meaning
   /// 4. Follow best practices for i18n key naming
-  Future<Map<TranslationKey, HardcodedString>> call({
-    required List<HardcodedString> strings,
+  Future<Map<TranslationKey, HardcodedStringEntity>> call({
+    required List<HardcodedStringEntity> strings,
   });
 }
 
@@ -38,8 +38,8 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
   }) : _client = client;
 
   @override
-  Future<Map<TranslationKey, HardcodedString>> call({
-    required List<HardcodedString> strings,
+  Future<Map<TranslationKey, HardcodedStringEntity>> call({
+    required List<HardcodedStringEntity> strings,
   }) async {
     if (strings.isEmpty) return {};
 
@@ -52,10 +52,10 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
 
     // Split the strings into manageable groups for API requests
     final groups = splitIntoManageableGroupsForApi(extractedStrings);
-    
+
     // Process each group and combine results
     final Map<String, String> combinedResults = {};
-    
+
     for (final group in groups) {
       // Call the server endpoint to generate ARB keys
       final result = await _client.publicArbHelpers.createArbKeyNames(
@@ -63,13 +63,13 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
         projectShaIdentifier: projectShaIdentifier,
         translationContents: group,
       );
-      
+
       // Add results to the combined results map
       combinedResults.addAll(result);
     }
 
     // Map the combined server response back to the required format
-    final Map<TranslationKey, HardcodedString> keyMap = {};
+    final Map<TranslationKey, HardcodedStringEntity> keyMap = {};
     for (final string in strings) {
       final sha1Key = generateSha1(string.value);
       if (combinedResults.containsKey(sha1Key)) {

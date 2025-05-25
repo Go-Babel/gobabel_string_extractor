@@ -17,7 +17,6 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$BabelLabelEntity {
-  String get filePath => throw _privateConstructorUsedError;
   List<BabelLabelEntity> get children => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -39,7 +38,6 @@ mixin _$BabelLabelEntity {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     childLabel,
@@ -47,7 +45,6 @@ mixin _$BabelLabelEntity {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     labelDynamicValue,
@@ -72,7 +69,6 @@ mixin _$BabelLabelEntity {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -80,7 +76,6 @@ mixin _$BabelLabelEntity {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -105,7 +100,6 @@ mixin _$BabelLabelEntity {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -113,7 +107,6 @@ mixin _$BabelLabelEntity {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -156,7 +149,7 @@ abstract class $BabelLabelEntityCopyWith<$Res> {
     $Res Function(BabelLabelEntity) then,
   ) = _$BabelLabelEntityCopyWithImpl<$Res, BabelLabelEntity>;
   @useResult
-  $Res call({String filePath, List<BabelLabelEntity> children});
+  $Res call({List<BabelLabelEntity> children});
 }
 
 /// @nodoc
@@ -173,13 +166,9 @@ class _$BabelLabelEntityCopyWithImpl<$Res, $Val extends BabelLabelEntity>
   /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
-  $Res call({Object? filePath = null, Object? children = null}) {
+  $Res call({Object? children = null}) {
     return _then(
       _value.copyWith(
-            filePath: null == filePath
-                ? _value.filePath
-                : filePath // ignore: cast_nullable_to_non_nullable
-                      as String,
             children: null == children
                 ? _value.children
                 : children // ignore: cast_nullable_to_non_nullable
@@ -388,7 +377,6 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     childLabel,
@@ -396,7 +384,6 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     labelDynamicValue,
@@ -434,7 +421,6 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -442,7 +428,6 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -480,7 +465,6 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -488,7 +472,6 @@ class _$BabelLabelEntityRootLabelImpl implements BabelLabelEntityRootLabel {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -565,7 +548,6 @@ abstract class BabelLabelEntityRootLabel implements BabelLabelEntity {
   String get babelFunctionImplementation;
   int get fileStartIndex;
   int get fileEndIndex;
-  @override
   String get filePath;
   @override
   List<BabelLabelEntity> get children;
@@ -594,7 +576,6 @@ abstract class _$$BabelLabelEntityChildLabelImplCopyWith<$Res>
     String babelFunctionImplementation,
     int parentStartIndex,
     int parentEndIndex,
-    String filePath,
     List<BabelLabelEntity> children,
   });
 }
@@ -620,7 +601,6 @@ class __$$BabelLabelEntityChildLabelImplCopyWithImpl<$Res>
     Object? babelFunctionImplementation = null,
     Object? parentStartIndex = null,
     Object? parentEndIndex = null,
-    Object? filePath = null,
     Object? children = null,
   }) {
     return _then(
@@ -649,10 +629,6 @@ class __$$BabelLabelEntityChildLabelImplCopyWithImpl<$Res>
             ? _value.parentEndIndex
             : parentEndIndex // ignore: cast_nullable_to_non_nullable
                   as int,
-        filePath: null == filePath
-            ? _value.filePath
-            : filePath // ignore: cast_nullable_to_non_nullable
-                  as String,
         children: null == children
             ? _value._children
             : children // ignore: cast_nullable_to_non_nullable
@@ -672,7 +648,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
     required this.babelFunctionImplementation,
     required this.parentStartIndex,
     required this.parentEndIndex,
-    required this.filePath,
     required final List<BabelLabelEntity> children,
   }) : _children = children;
 
@@ -691,9 +666,8 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
   @override
   final int parentEndIndex;
   // ✅ CHECK
-  @override
-  final String filePath;
   final List<BabelLabelEntity> _children;
+  // ✅ CHECK
   @override
   List<BabelLabelEntity> get children {
     if (_children is EqualUnmodifiableListView) return _children;
@@ -703,7 +677,7 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
 
   @override
   String toString() {
-    return 'BabelLabelEntity.childLabel(l10nKey: $l10nKey, l10nValue: $l10nValue, babelFunctionDeclaration: $babelFunctionDeclaration, babelFunctionImplementation: $babelFunctionImplementation, parentStartIndex: $parentStartIndex, parentEndIndex: $parentEndIndex, filePath: $filePath, children: $children)';
+    return 'BabelLabelEntity.childLabel(l10nKey: $l10nKey, l10nValue: $l10nValue, babelFunctionDeclaration: $babelFunctionDeclaration, babelFunctionImplementation: $babelFunctionImplementation, parentStartIndex: $parentStartIndex, parentEndIndex: $parentEndIndex, children: $children)';
   }
 
   @override
@@ -729,8 +703,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
                 other.parentStartIndex == parentStartIndex) &&
             (identical(other.parentEndIndex, parentEndIndex) ||
                 other.parentEndIndex == parentEndIndex) &&
-            (identical(other.filePath, filePath) ||
-                other.filePath == filePath) &&
             const DeepCollectionEquality().equals(other._children, _children));
   }
 
@@ -743,7 +715,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
     babelFunctionImplementation,
     parentStartIndex,
     parentEndIndex,
-    filePath,
     const DeepCollectionEquality().hash(_children),
   );
 
@@ -779,7 +750,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     childLabel,
@@ -787,7 +757,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     labelDynamicValue,
@@ -799,7 +768,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       babelFunctionImplementation,
       parentStartIndex,
       parentEndIndex,
-      filePath,
       children,
     );
   }
@@ -825,7 +793,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -833,7 +800,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -845,7 +811,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       babelFunctionImplementation,
       parentStartIndex,
       parentEndIndex,
-      filePath,
       children,
     );
   }
@@ -871,7 +836,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -879,7 +843,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -893,7 +856,6 @@ class _$BabelLabelEntityChildLabelImpl implements BabelLabelEntityChildLabel {
         babelFunctionImplementation,
         parentStartIndex,
         parentEndIndex,
-        filePath,
         children,
       );
     }
@@ -946,7 +908,6 @@ abstract class BabelLabelEntityChildLabel implements BabelLabelEntity {
     required final String babelFunctionImplementation,
     required final int parentStartIndex,
     required final int parentEndIndex,
-    required final String filePath,
     required final List<BabelLabelEntity> children,
   }) = _$BabelLabelEntityChildLabelImpl;
 
@@ -956,8 +917,6 @@ abstract class BabelLabelEntityChildLabel implements BabelLabelEntity {
   String get babelFunctionImplementation;
   int get parentStartIndex; // ✅ CHECK
   int get parentEndIndex; // ✅ CHECK
-  @override
-  String get filePath;
   @override
   List<BabelLabelEntity> get children;
 
@@ -982,7 +941,6 @@ abstract class _$$BabelLabelEntityLabelDynamicValueImplCopyWith<$Res>
     String content,
     int parentStartIndex,
     int parentEndIndex,
-    String filePath,
     List<BabelLabelEntity> children,
   });
 }
@@ -1008,7 +966,6 @@ class __$$BabelLabelEntityLabelDynamicValueImplCopyWithImpl<$Res>
     Object? content = null,
     Object? parentStartIndex = null,
     Object? parentEndIndex = null,
-    Object? filePath = null,
     Object? children = null,
   }) {
     return _then(
@@ -1025,10 +982,6 @@ class __$$BabelLabelEntityLabelDynamicValueImplCopyWithImpl<$Res>
             ? _value.parentEndIndex
             : parentEndIndex // ignore: cast_nullable_to_non_nullable
                   as int,
-        filePath: null == filePath
-            ? _value.filePath
-            : filePath // ignore: cast_nullable_to_non_nullable
-                  as String,
         children: null == children
             ? _value._children
             : children // ignore: cast_nullable_to_non_nullable
@@ -1046,7 +999,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
     required this.content,
     required this.parentStartIndex,
     required this.parentEndIndex,
-    required this.filePath,
     required final List<BabelLabelEntity> children,
   }) : _children = children;
 
@@ -1056,8 +1008,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
   final int parentStartIndex;
   @override
   final int parentEndIndex;
-  @override
-  final String filePath;
   final List<BabelLabelEntity> _children;
   @override
   List<BabelLabelEntity> get children {
@@ -1068,7 +1018,7 @@ class _$BabelLabelEntityLabelDynamicValueImpl
 
   @override
   String toString() {
-    return 'BabelLabelEntity.labelDynamicValue(content: $content, parentStartIndex: $parentStartIndex, parentEndIndex: $parentEndIndex, filePath: $filePath, children: $children)';
+    return 'BabelLabelEntity.labelDynamicValue(content: $content, parentStartIndex: $parentStartIndex, parentEndIndex: $parentEndIndex, children: $children)';
   }
 
   @override
@@ -1081,8 +1031,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
                 other.parentStartIndex == parentStartIndex) &&
             (identical(other.parentEndIndex, parentEndIndex) ||
                 other.parentEndIndex == parentEndIndex) &&
-            (identical(other.filePath, filePath) ||
-                other.filePath == filePath) &&
             const DeepCollectionEquality().equals(other._children, _children));
   }
 
@@ -1092,7 +1040,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
     content,
     parentStartIndex,
     parentEndIndex,
-    filePath,
     const DeepCollectionEquality().hash(_children),
   );
 
@@ -1130,7 +1077,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     childLabel,
@@ -1138,7 +1084,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )
     labelDynamicValue,
@@ -1147,7 +1092,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       content,
       parentStartIndex,
       parentEndIndex,
-      filePath,
       children,
     );
   }
@@ -1173,7 +1117,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -1181,7 +1124,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -1190,7 +1132,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       content,
       parentStartIndex,
       parentEndIndex,
-      filePath,
       children,
     );
   }
@@ -1216,7 +1157,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       String babelFunctionImplementation,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     childLabel,
@@ -1224,7 +1164,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
       String content,
       int parentStartIndex,
       int parentEndIndex,
-      String filePath,
       List<BabelLabelEntity> children,
     )?
     labelDynamicValue,
@@ -1235,7 +1174,6 @@ class _$BabelLabelEntityLabelDynamicValueImpl
         content,
         parentStartIndex,
         parentEndIndex,
-        filePath,
         children,
       );
     }
@@ -1285,15 +1223,12 @@ abstract class BabelLabelEntityLabelDynamicValue implements BabelLabelEntity {
     required final String content,
     required final int parentStartIndex,
     required final int parentEndIndex,
-    required final String filePath,
     required final List<BabelLabelEntity> children,
   }) = _$BabelLabelEntityLabelDynamicValueImpl;
 
   String get content;
   int get parentStartIndex;
   int get parentEndIndex;
-  @override
-  String get filePath;
   @override
   List<BabelLabelEntity> get children;
 

@@ -1,6 +1,6 @@
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_dynamic_value_entity.dart';
 
-class HardcodedString {
+class HardcodedStringEntity {
   final String value;
   final String filePath;
   final int? parentStartIndex;
@@ -9,7 +9,7 @@ class HardcodedString {
   final int fileEndIndex;
   final List<HardcodedStringDynamicValue> dynamicFields;
 
-  const HardcodedString({
+  const HardcodedStringEntity({
     required this.value,
     required this.filePath,
     this.parentStartIndex,

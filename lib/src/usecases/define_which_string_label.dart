@@ -8,11 +8,13 @@ import 'package:gobabel_string_extractor/src/core/cripto.dart';
 import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
 
 abstract class IDefineWhichStringLabelUsecase {
-  /// Delete all [HardcodedString]'s that are not labels.
+  /// Delete all [HardcodedStringEntity]'s that are not labels.
   ///
   /// We wan't to ignore hardcoded strings that are dart code, like toString() method outputs, etc.
   /// We wan't only the strings that are user-facing messages, labels, and descriptions (natural language content intended for user display).
-  Future<List<HardcodedString>> call({required List<HardcodedString> strings});
+  Future<List<HardcodedStringEntity>> call({
+    required List<HardcodedStringEntity> strings,
+  });
 }
 
 /// Implementation of [IDefineWhichStringLabelUsecase] that uses the Serverpod server
@@ -34,8 +36,8 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
   }) : _client = client;
 
   @override
-  Future<List<HardcodedString>> call({
-    required List<HardcodedString> strings,
+  Future<List<HardcodedStringEntity>> call({
+    required List<HardcodedStringEntity> strings,
   }) async {
     if (strings.isEmpty) return [];
 
