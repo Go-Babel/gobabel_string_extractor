@@ -9,11 +9,13 @@ abstract class IMapBabelLabelsUsecase {
 
 class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
   @override
-  List<BabelLabelEntity> call({required List<LabelsEntityRootLabel> strings}) {
-    final List<BabelLabelEntity> result = [];
+  List<BabelLabelEntityRootLabel> call({
+    required List<LabelsEntityRootLabel> strings,
+  }) {
+    final List<BabelLabelEntityRootLabel> result = [];
 
     for (final rootLabel in strings) {
-      result.add(_processBabelLabel(rootLabel));
+      result.add(_handleRootLabel(rootLabel));
     }
 
     return result;

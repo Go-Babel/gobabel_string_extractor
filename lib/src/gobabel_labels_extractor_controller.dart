@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:gobabel_client/gobabel_client.dart';
+import 'package:gobabel_core/gobabel_core.dart';
+import 'package:gobabel_string_extractor/src/entities/babel_label_entity.dart';
 import 'package:gobabel_string_extractor/src/usecases/create_human_friendly_arb_keys.dart';
 import 'package:gobabel_string_extractor/src/usecases/define_which_string_label.dart';
 import 'package:gobabel_string_extractor/src/usecases/extract_all_strings_usecase.dart';
@@ -16,11 +18,13 @@ class GobabelStringExtractorController {
   /// [projectApiToken] - Project API token for authentication
   /// [projectShaIdentifier] - Project SHA identifier
   /// [apiBaseUrl] - Base URL for the API (defaults to localhost)
-  Future<void> extractAndProcessStrings({
+  Future<Iterable<MapEntry<FilePath, List<BabelLabelEntityRootLabel>>>>
+  extractAndProcessStrings({
     required List<File> files,
     required String projectApiToken,
-    required String projectShaIdentifier,
+    required BigInt projectShaIdentifier,
     String apiBaseUrl = 'http://localhost:8080/',
+    bool generateLogs = false,
   }) async {
     // Create HTTP client
     final Client client = Client(
@@ -30,21 +34,31 @@ class GobabelStringExtractorController {
 
     // 1. Extract all strings from the files
     print('Extracting strings from ${files.length} files...');
-    final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl(
-      validateCandidateStringUsecase: ValidateCandidateStringUsecase(),
+    final allStrings = await runWithSpinner(
+      successMessage: 'Extracted strings from ${files.length} files',
+      message: 'Extracting strings from ${files.length} files...',
+      () async {
+        final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl(
+          validateCandidateStringUsecase: ValidateCandidateStringUsecase(),
+        );
+
+        final allStrings = await extractAllStringsUsecase.call(files: files);
+        if (generateLogs) {
+          print('Extracted ${allStrings.length} raw strings');
+          await _saveStringData(
+            allStrings.map((s) => s.toMap()).toList(),
+            'step_one.json',
+          );
+        }
+      },
     );
-
-    final allStrings = await extractAllStringsUsecase.call(files: files);
-    print('Extracted ${allStrings.length} raw strings');
-
-    _saveStringData(allStrings.map((s) => s.toMap()).toList(), 'strings.json');
 
     // 2. Define which strings are labels
     print('Analyzing which strings are displayable labels...');
     final defineWhichStringLabelUsecase =
         DefineWhichStringLabelWithAiOnServerUsecaseImpl(
           projectApiToken: projectApiToken,
-          projectShaIdentifier: BigInt.parse(projectShaIdentifier),
+          projectShaIdentifier: projectShaIdentifier,
           client: client,
         );
     final labelStrings = await defineWhichStringLabelUsecase.call(
@@ -57,7 +71,7 @@ class GobabelStringExtractorController {
     final createHumanFriendlyArbKeysUsecase =
         CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl(
           projectApiToken: projectApiToken,
-          projectShaIdentifier: BigInt.parse(projectShaIdentifier),
+          projectShaIdentifier: projectShaIdentifier,
           client: client,
         );
     final keyedStrings = await createHumanFriendlyArbKeysUsecase.call(
@@ -77,17 +91,43 @@ class GobabelStringExtractorController {
     final mapBabelLabelsUsecaseImpl = MapBabelLabelsUsecaseImpl();
     final babelLabels = mapBabelLabelsUsecaseImpl(strings: labelEntities);
 
+    Map<FilePath, List<BabelLabelEntityRootLabel>> allHardcodedStrings =
+        <FilePath, List<BabelLabelEntityRootLabel>>{};
+
+    for (final babelLabel in babelLabels) {
+      final filePath = babelLabel.filePath;
+      if (allHardcodedStrings[filePath] == null) {
+        allHardcodedStrings[filePath] = [];
+      }
+      allHardcodedStrings[filePath]!.add(babelLabel);
+    }
+
+    // Sort the entries by startIndex. The first should be the biggest index,
+    // the last should be the smallest index
+    allHardcodedStrings.forEach((key, value) {
+      value.sort((a, b) {
+        final aIndex = a.fileStartIndex;
+        final bIndex = b.fileStartIndex;
+        return aIndex.compareTo(bIndex); // Descending order
+      });
+    });
+
     // Save the result
-    _saveStringData(
+    await _saveStringData(
       babelLabels.map((label) => label.toJson()).toList(),
       'translated_result.json',
     );
+
+    return allHardcodedStrings.entries.toList();
   }
 
   /// Saves data to a JSON file
-  void _saveStringData(List<Map<String, dynamic>> data, String fileName) {
+  Future<void> _saveStringData(
+    List<Map<String, dynamic>> data,
+    String fileName,
+  ) async {
     final outFile = File(p.join(Directory.current.path, fileName));
-    outFile.writeAsStringSync(JsonEncoder.withIndent('  ').convert(data));
+    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
     print('Saved results to ${outFile.path}');
   }
 }

@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:gobabel_string_extractor/src/gobabel_string_extractor_controller.dart';
-import 'package:path/path.dart' as p;
+import 'package:gobabel_string_extractor/gobabel_labels_extractor.dart';
 
 void main(List<String> args) async {
   // Parse command line arguments
@@ -59,7 +58,7 @@ void main(List<String> args) async {
     await controller.extractAndProcessStrings(
       files: files,
       projectApiToken: projectApiToken,
-      projectShaIdentifier: projectShaIdentifier,
+      projectShaIdentifier: BigInt.parse(projectShaIdentifier),
       apiBaseUrl: apiBaseUrl,
     );
     print('String extraction completed successfully.');
@@ -67,47 +66,4 @@ void main(List<String> args) async {
     stderr.writeln('Error during string extraction: $e');
     exit(1);
   }
-}
-
-/// List of folders to exclude from scanning
-const List<String> excludedFolders = [
-  'android',
-  'ios',
-  'linux',
-  'macos',
-  'build',
-  'web',
-  'windows',
-  'test',
-];
-
-/// Gets eligible files for string extraction from the directory
-List<File> getEligibleFiles(Directory dir) {
-  return dir.listSync(recursive: true).whereType<File>().where((file) {
-    // Normalize path separators for consistent splitting, then split into segments
-    final pathSegments = p.split(file.path.replaceAll(r'\', '/'));
-    for (final segment in pathSegments) {
-      final segmentContainExcludeFolder = excludedFolders.any(
-        (folder) => segment.contains(folder),
-      );
-
-      // ex: .dart_tool
-      final segmentContainPrivateFolder =
-          segment.contains('/.') || segment.startsWith('.');
-
-      final isFreezedFile = file.path.endsWith('.freezed.dart');
-      final isPartFile = file.path.endsWith('.part.dart');
-      final isGeneratedFile = file.path.endsWith('.g.dart');
-      if (segmentContainExcludeFolder ||
-          segmentContainPrivateFolder ||
-          isFreezedFile ||
-          isPartFile ||
-          isGeneratedFile) {
-        return false; // Exclude this file
-      }
-    }
-
-    // Only include Dart files
-    return file.path.endsWith('.dart');
-  }).toList();
 }
