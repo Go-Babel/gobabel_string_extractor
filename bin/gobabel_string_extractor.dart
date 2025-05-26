@@ -50,7 +50,7 @@ void main(List<String> args) async {
   try {
     // Get eligible files for scanning
     print('Finding eligible files in ${dir.path}...');
-    final files = getEligibleFiles(dir);
+    final files = await getEligibleFiles(dir);
     print('Found ${files.length} eligible files for scanning');
 
     // Process the files

@@ -14,14 +14,18 @@ const List<String> excludedFolders = [
 ];
 
 /// Gets eligible files for string extraction from the directory
-List<File> getEligibleFiles(Directory dir) {
+Future<List<File>> getEligibleFiles(Directory dir) async {
   Directory lib;
   if (dir.path.endsWith('lib')) {
     lib = dir;
   } else {
     lib = Directory('${dir.path}/lib');
   }
-  return lib.listSync(recursive: true).whereType<File>().where((file) {
+
+  final List<FileSystemEntity> entities = await lib
+      .list(recursive: true)
+      .toList();
+  return entities.whereType<File>().where((file) {
     // Normalize path separators for consistent splitting, then split into segments
     final pathSegments = p.split(file.path.replaceAll(r'\', '/'));
     for (final segment in pathSegments) {
