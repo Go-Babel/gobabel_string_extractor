@@ -1,14 +1,16 @@
 import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/entities/babel_label_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/labels_entity.dart';
-import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 
 abstract class IMapBabelLabelsUsecase {
   List<BabelLabelEntity> call({required List<LabelsEntityRootLabel> strings});
 }
 
 class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
-  const MapBabelLabelsUsecaseImpl();
+  final InferDeclarationFunctionByArbValueUsecase _inferDeclaration;
+  const MapBabelLabelsUsecaseImpl({
+    required InferDeclarationFunctionByArbValueUsecase inferDeclaration,
+  }) : _inferDeclaration = inferDeclaration;
   @override
   List<BabelLabelEntityRootLabel> call({
     required List<LabelsEntityRootLabel> strings,
@@ -32,7 +34,6 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
 
   BabelLabelEntityRootLabel _handleRootLabel(LabelsEntityRootLabel entity) {
     final L10nKey l10nKey = entity.l10nKey;
-    final HardcodedStringLabel hardcodedString = entity.hardcodedString;
     final FilePath filePath = entity.filePath;
     final int fileStartIndex = entity.fileStartIndex;
     final int fileEndIndex = entity.fileEndIndex;
@@ -91,10 +92,7 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
     }
 
     BabelFunctionDeclaration gobabelFunctionDeclarationString =
-        '''${hardcodedString.formatToComment}
-  static String $l10nKey(${variableNames.map((e) => 'Object? $e').join(', ')}) {
-    return _getByKey('$l10nKey')${variableNames.map((e) => '.replaceAll(\'{$e}\', $e.toString())').join()};
-  }''';
+        _inferDeclaration(key: l10nKey, value: l10nValue);
 
     BabelFunctionImplementation gobabelFunctionImplementationString =
         '$kBabelClass.$l10nKey(${implementationParameters.map((e) => e).join(', ')})';

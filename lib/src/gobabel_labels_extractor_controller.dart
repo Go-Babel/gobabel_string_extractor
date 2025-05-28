@@ -36,7 +36,9 @@ class GobabelStringExtractorController {
              client: client,
            ),
        _mapStringsHierarchyUsecase = MapStringsHierarchyUsecaseImpl(),
-       _mapBabelLabelsUsecase = MapBabelLabelsUsecaseImpl();
+       _mapBabelLabelsUsecase = MapBabelLabelsUsecaseImpl(
+         inferDeclaration: InferDeclarationFunctionByArbValueUsecase(),
+       );
 
   /// Extracts and processes strings from a list of files for internationalization.
   ///
