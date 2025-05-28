@@ -10,6 +10,7 @@ abstract class IMapStringsHierarchyUsecase {
 }
 
 class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
+  const MapStringsHierarchyUsecaseImpl();
   @override
   Future<List<LabelsEntityRootLabel>> call({
     required Map<TranslationKey, HardcodedStringEntity> strings,

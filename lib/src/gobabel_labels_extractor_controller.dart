@@ -12,6 +12,32 @@ import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.
 import 'package:path/path.dart' as p;
 
 class GobabelStringExtractorController {
+  final ExtractAllStringsInDartUsecaseImpl _extractAllStringsUsecase;
+  final DefineWhichStringLabelWithAiOnServerUsecaseImpl
+  _defineWhichStringLabelUsecase;
+  final CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
+  _createHumanFriendlyArbKeysUsecase;
+  final MapStringsHierarchyUsecaseImpl _mapStringsHierarchyUsecase;
+  final MapBabelLabelsUsecaseImpl _mapBabelLabelsUsecase;
+
+  GobabelStringExtractorController({
+    required Client client,
+    GaranteeUniquenessOfArbKeysUsecase garanteeUniquenessOfArbKeysUsecase =
+        const GaranteeUniquenessOfArbKeysUsecase(),
+  }) : _extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl(
+         validateCandidateStringUsecase: ValidateCandidateStringUsecase(),
+       ),
+       _defineWhichStringLabelUsecase =
+           DefineWhichStringLabelWithAiOnServerUsecaseImpl(client: client),
+       _createHumanFriendlyArbKeysUsecase =
+           CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl(
+             garanteeUniquenessOfArbKeysUsecase:
+                 garanteeUniquenessOfArbKeysUsecase,
+             client: client,
+           ),
+       _mapStringsHierarchyUsecase = MapStringsHierarchyUsecaseImpl(),
+       _mapBabelLabelsUsecase = MapBabelLabelsUsecaseImpl();
+
   /// Extracts and processes strings from a list of files for internationalization.
   ///
   /// [files] - List of files to scan
@@ -23,26 +49,17 @@ class GobabelStringExtractorController {
     required List<File> files,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
+
     String apiBaseUrl = 'http://localhost:8080/',
     bool generateLogs = false,
   }) async {
-    // Create HTTP client
-    final Client client = Client(
-      apiBaseUrl,
-      connectionTimeout: const Duration(seconds: 60),
-    );
-
     // 1. Extract all strings from the files
     print('Extracting strings from ${files.length} files...');
     final allStrings = await runWithSpinner(
       successMessage: 'Extracted strings from ${files.length} files',
       message: 'Extracting strings from ${files.length} files...',
       () async {
-        final extractAllStringsUsecase = ExtractAllStringsInDartUsecaseImpl(
-          validateCandidateStringUsecase: ValidateCandidateStringUsecase(),
-        );
-
-        final allStrings = await extractAllStringsUsecase.call(files: files);
+        final allStrings = await _extractAllStringsUsecase(files: files);
         if (generateLogs) {
           print('Extracted ${allStrings.length} raw strings');
           await _saveStringData(
@@ -55,41 +72,31 @@ class GobabelStringExtractorController {
 
     // 2. Define which strings are labels
     print('Analyzing which strings are displayable labels...');
-    final defineWhichStringLabelUsecase =
-        DefineWhichStringLabelWithAiOnServerUsecaseImpl(
-          projectApiToken: projectApiToken,
-          projectShaIdentifier: projectShaIdentifier,
-          client: client,
-        );
-    final labelStrings = await defineWhichStringLabelUsecase.call(
+    final labelStrings = await _defineWhichStringLabelUsecase(
       strings: allStrings,
+      projectApiToken: projectApiToken,
+      projectShaIdentifier: projectShaIdentifier,
     );
     print('Found ${labelStrings.length} displayable labels');
 
     // 3. Create human-friendly ARB keys
     print('Creating human-friendly ARB keys...');
-    final createHumanFriendlyArbKeysUsecase =
-        CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl(
-          projectApiToken: projectApiToken,
-          projectShaIdentifier: projectShaIdentifier,
-          client: client,
-        );
-    final keyedStrings = await createHumanFriendlyArbKeysUsecase.call(
+    final keyedStrings = await _createHumanFriendlyArbKeysUsecase(
       strings: labelStrings,
+      projectApiToken: projectApiToken,
+      projectShaIdentifier: projectShaIdentifier,
     );
     print('Created ${keyedStrings.length} ARB keys');
 
     // 4. Map strings hierarchy
     print('Mapping string hierarchy...');
-    final mapStringsHierarchyUsecase = MapStringsHierarchyUsecaseImpl();
-    final labelEntities = await mapStringsHierarchyUsecase.call(
+    final labelEntities = await _mapStringsHierarchyUsecase(
       strings: keyedStrings,
     );
     print('Created hierarchy with ${labelEntities.length} root labels');
 
     // 5. Map to babel labels models
-    final mapBabelLabelsUsecaseImpl = MapBabelLabelsUsecaseImpl();
-    final babelLabels = mapBabelLabelsUsecaseImpl(strings: labelEntities);
+    final babelLabels = _mapBabelLabelsUsecase(strings: labelEntities);
 
     Map<FilePath, List<BabelLabelEntityRootLabel>> allHardcodedStrings =
         <FilePath, List<BabelLabelEntityRootLabel>>{};

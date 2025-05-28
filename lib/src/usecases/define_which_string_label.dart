@@ -14,6 +14,8 @@ abstract class IDefineWhichStringLabelUsecase {
   /// We wan't only the strings that are user-facing messages, labels, and descriptions (natural language content intended for user display).
   Future<List<HardcodedStringEntity>> call({
     required List<HardcodedStringEntity> strings,
+    required String projectApiToken,
+    required BigInt projectShaIdentifier,
   });
 }
 
@@ -21,23 +23,21 @@ abstract class IDefineWhichStringLabelUsecase {
 /// with AI to determine which strings are displayable labels.
 class DefineWhichStringLabelWithAiOnServerUsecaseImpl
     implements IDefineWhichStringLabelUsecase {
-  final String projectApiToken;
-  final BigInt projectShaIdentifier;
   final Client _client;
 
   /// Creates a new instance of [DefineWhichStringLabelWithAiOnServerUsecaseImpl].
   ///
   /// Requires [projectApiToken] and [projectShaIdentifier] for authenticating
   /// with the server, and an optional [client] for making the API calls.
-  DefineWhichStringLabelWithAiOnServerUsecaseImpl({
-    required this.projectApiToken,
-    required this.projectShaIdentifier,
+  const DefineWhichStringLabelWithAiOnServerUsecaseImpl({
     required Client client,
   }) : _client = client;
 
   @override
   Future<List<HardcodedStringEntity>> call({
     required List<HardcodedStringEntity> strings,
+    required String projectApiToken,
+    required BigInt projectShaIdentifier,
   }) async {
     if (strings.isEmpty) return [];
 

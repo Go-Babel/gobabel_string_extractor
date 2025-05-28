@@ -8,6 +8,7 @@ abstract class IMapBabelLabelsUsecase {
 }
 
 class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
+  const MapBabelLabelsUsecaseImpl();
   @override
   List<BabelLabelEntityRootLabel> call({
     required List<LabelsEntityRootLabel> strings,

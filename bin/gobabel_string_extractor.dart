@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:args/args.dart';
+import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/gobabel_labels_extractor.dart';
 
 void main(List<String> args) async {
@@ -53,12 +54,18 @@ void main(List<String> args) async {
     final files = await getEligibleFiles(dir);
     print('Found ${files.length} eligible files for scanning');
 
+    // Create HTTP client
+    final Client client = Client(
+      apiBaseUrl,
+      connectionTimeout: const Duration(seconds: 60),
+    );
+
     // Process the files
-    final controller = GobabelStringExtractorController();
+    final controller = GobabelStringExtractorController(client: client);
     await controller.extractAndProcessStrings(
-      files: files,
       projectApiToken: projectApiToken,
       projectShaIdentifier: BigInt.parse(projectShaIdentifier),
+      files: files,
       apiBaseUrl: apiBaseUrl,
     );
     print('String extraction completed successfully.');

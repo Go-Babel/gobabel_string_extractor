@@ -16,6 +16,8 @@ abstract class ICreateHumanFriendlyArbKeysUsecase {
   /// 4. Follow best practices for i18n key naming
   Future<Map<TranslationKey, HardcodedStringEntity>> call({
     required List<HardcodedStringEntity> strings,
+    required String projectApiToken,
+    required BigInt projectShaIdentifier,
   });
 }
 
@@ -23,23 +25,25 @@ abstract class ICreateHumanFriendlyArbKeysUsecase {
 /// with AI to generate human-friendly ARB keys.
 class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     implements ICreateHumanFriendlyArbKeysUsecase {
-  final String projectApiToken;
-  final BigInt projectShaIdentifier;
+  final GaranteeUniquenessOfArbKeysUsecase _garanteeUniquenessOfArbKeysUsecase;
   final Client _client;
 
   /// Creates a new instance of [CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl].
   ///
   /// Requires [projectApiToken] and [projectShaIdentifier] for authenticating
   /// with the server, and a [client] for making the API calls.
-  CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl({
-    required this.projectApiToken,
-    required this.projectShaIdentifier,
+  const CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl({
+    required GaranteeUniquenessOfArbKeysUsecase
+    garanteeUniquenessOfArbKeysUsecase,
     required Client client,
-  }) : _client = client;
+  }) : _client = client,
+       _garanteeUniquenessOfArbKeysUsecase = garanteeUniquenessOfArbKeysUsecase;
 
   @override
   Future<Map<TranslationKey, HardcodedStringEntity>> call({
     required List<HardcodedStringEntity> strings,
+    required String projectApiToken,
+    required BigInt projectShaIdentifier,
   }) async {
     if (strings.isEmpty) return {};
 
@@ -65,7 +69,11 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       );
 
       // Add results to the combined results map
-      combinedResults.addAll(result);
+      combinedResults.addAll(
+        result.map((key, value) {
+          return MapEntry(_garanteeUniquenessOfArbKeysUsecase(key), value);
+        }),
+      );
     }
 
     // Map the combined server response back to the required format
