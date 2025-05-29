@@ -1,8 +1,10 @@
+import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
 import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
+import 'package:console_bars/console_bars.dart';
 
 abstract class IDefineWhichStringLabelUsecase {
   /// Delete all [HardcodedStringEntity]'s that are not labels.
@@ -60,6 +62,41 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
 
       // Add results to the combined results map
       combinedResults.addAll(result);
+    }
+
+    final bool isSmallAmountOfStrings = groups.length <= 2;
+
+    final FillingBar? p = isSmallAmountOfStrings
+        ? null
+        : FillingBar(
+            desc: 'Analysing strings...',
+            total: groups.length,
+            time: true,
+            percentage: true,
+          );
+
+    Future<void> function() async {
+      for (final group in groups) {
+        p?.increment();
+        final result = await _client.publicArbHelpers
+            .analyseIfStringIsADisplayableLabel(
+              projectApiToken: projectApiToken,
+              projectShaIdentifier: projectShaIdentifier,
+              extractedStrings: group,
+            );
+
+        combinedResults.addAll(result);
+      }
+    }
+
+    if (isSmallAmountOfStrings) {
+      await function();
+    } else {
+      await runWithSpinner(
+        successMessage: 'Finished analyzing strings',
+        message: 'Analyzing strings...',
+        function,
+      );
     }
 
     // Filter the strings based on the combined server responses
