@@ -55,8 +55,9 @@ class GobabelStringExtractorController {
     String apiBaseUrl = 'http://localhost:8080/',
     bool generateLogs = false,
   }) async {
+    if (generateLogs) print('Extracting strings from ${files.length} files...');
+
     // 1. Extract all strings from the files
-    print('Extracting strings from ${files.length} files...');
     final allStrings = await runWithSpinner(
       successMessage: 'Extracted strings from ${files.length} files',
       message: 'Extracting strings from ${files.length} files...',
@@ -64,11 +65,13 @@ class GobabelStringExtractorController {
         final allStrings = await _extractAllStringsUsecase(files: files);
         if (generateLogs) {
           print('Extracted ${allStrings.length} raw strings');
-          await _saveStringData(
+          await _saveStringListData(
             allStrings.map((s) => s.toMap()).toList(),
-            'step_one.json',
+            'step_1.json',
           );
         }
+
+        return allStrings;
       },
     );
 
@@ -79,23 +82,39 @@ class GobabelStringExtractorController {
       projectApiToken: projectApiToken,
       projectShaIdentifier: projectShaIdentifier,
     );
-    print('Found ${labelStrings.length} displayable labels');
+    if (generateLogs) {
+      print('Found ${labelStrings.length} displayable labels');
+      await _saveStringListData(
+        labelStrings.map((s) => s.toMap()).toList(),
+        'step_2.json',
+      );
+    }
 
     // 3. Create human-friendly ARB keys
-    print('Creating human-friendly ARB keys...');
+    if (generateLogs) print('Creating human-friendly ARB keys...');
     final keyedStrings = await _createHumanFriendlyArbKeysUsecase(
       strings: labelStrings,
       projectApiToken: projectApiToken,
       projectShaIdentifier: projectShaIdentifier,
     );
-    print('Created ${keyedStrings.length} ARB keys');
+    if (generateLogs) {
+      print('Created ${keyedStrings.length} ARB keys');
+      await _saveStringData(
+        keyedStrings.map((k, v) => MapEntry(k, v.toMap())),
+        'step_3.json',
+      );
+    }
 
     // 4. Map strings hierarchy
-    print('Mapping string hierarchy...');
-    final labelEntities = await _mapStringsHierarchyUsecase(
-      strings: keyedStrings,
-    );
-    print('Created hierarchy with ${labelEntities.length} root labels');
+    if (generateLogs) print('Mapping string hierarchy...');
+    final labelEntities = _mapStringsHierarchyUsecase(strings: keyedStrings);
+    if (generateLogs) {
+      print('Created hierarchy with ${labelEntities.length} root labels');
+      await _saveStringListData(
+        labelEntities.map((e) => e.toJson()).toList(),
+        'step_4.json',
+      );
+    }
 
     // 5. Map to babel labels models
     final babelLabels = _mapBabelLabelsUsecase(strings: labelEntities);
@@ -122,7 +141,7 @@ class GobabelStringExtractorController {
     });
 
     // Save the result
-    await _saveStringData(
+    await _saveStringListData(
       babelLabels.map((label) => label.toJson()).toList(),
       'translated_result.json',
     );
@@ -131,8 +150,18 @@ class GobabelStringExtractorController {
   }
 
   /// Saves data to a JSON file
-  Future<void> _saveStringData(
+  Future<void> _saveStringListData(
     List<Map<String, dynamic>> data,
+    String fileName,
+  ) async {
+    final outFile = File(p.join(Directory.current.path, fileName));
+    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
+    print('Saved results to ${outFile.path}');
+  }
+
+  /// Saves data to a JSON file
+  Future<void> _saveStringData(
+    Map<String, dynamic> data,
     String fileName,
   ) async {
     final outFile = File(p.join(Directory.current.path, fileName));

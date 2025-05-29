@@ -4,7 +4,7 @@ import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.da
 import 'package:gobabel_string_extractor/src/entities/labels_entity.dart';
 
 abstract class IMapStringsHierarchyUsecase {
-  Future<List<LabelsEntityRootLabel>> call({
+  List<LabelsEntityRootLabel> call({
     required Map<TranslationKey, HardcodedStringEntity> strings,
   });
 }
@@ -12,9 +12,9 @@ abstract class IMapStringsHierarchyUsecase {
 class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
   const MapStringsHierarchyUsecaseImpl();
   @override
-  Future<List<LabelsEntityRootLabel>> call({
+  List<LabelsEntityRootLabel> call({
     required Map<TranslationKey, HardcodedStringEntity> strings,
-  }) async {
+  }) {
     // First, separate root strings (those without parent) from child strings
     final rootStrings = strings.entries
         .where(

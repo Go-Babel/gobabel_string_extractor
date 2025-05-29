@@ -3,6 +3,7 @@ import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.da
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
 import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
+import 'package:console_bars/console_bars.dart';
 
 abstract class ICreateHumanFriendlyArbKeysUsecase {
   /// Creates human-friendly ARB keys for a list of hardcoded strings.
@@ -60,19 +61,43 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     // Process each group and combine results
     final Map<String, String> combinedResults = {};
 
-    for (final group in groups) {
-      // Call the server endpoint to generate ARB keys
-      final result = await _client.publicArbHelpers.createArbKeyNames(
-        projectApiToken: projectApiToken,
-        projectShaIdentifier: projectShaIdentifier,
-        translationContents: group,
-      );
+    final bool isSmallAmountOfStrings = groups.length <= 2;
 
-      // Add results to the combined results map
-      combinedResults.addAll(
-        result.map((key, value) {
-          return MapEntry(_garanteeUniquenessOfArbKeysUsecase(key), value);
-        }),
+    final FillingBar? p = isSmallAmountOfStrings
+        ? null
+        : FillingBar(
+            desc: 'Replacing hardcoded strings...',
+            total: groups.length,
+            time: true,
+            percentage: true,
+          );
+
+    Future<void> function() async {
+      for (final group in groups) {
+        p?.increment();
+        // Call the server endpoint to generate ARB keys
+        final result = await _client.publicArbHelpers.createArbKeyNames(
+          projectApiToken: projectApiToken,
+          projectShaIdentifier: projectShaIdentifier,
+          translationContents: group,
+        );
+
+        // Add results to the combined results map
+        combinedResults.addAll(
+          result.map((key, value) {
+            return MapEntry(_garanteeUniquenessOfArbKeysUsecase(key), value);
+          }),
+        );
+      }
+    }
+
+    if (isSmallAmountOfStrings) {
+      await function();
+    } else {
+      await runWithSpinner(
+        successMessage: 'Created human-friendly ARB keys',
+        message: 'Creating human-friendly ARB keys...',
+        function,
       );
     }
 

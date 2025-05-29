@@ -15,6 +15,7 @@ dependency_overrides:
 dependencies:
   args: ^2.7.0
   crypto: ^3.0.6
+  console_bars: ^1.2.0
   path: ^1.9.1        # for cross-platform path handling
   analyzer: ^7.4.5    # for parsing Dart code (AST)
   gobabel_client:
