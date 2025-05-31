@@ -76,14 +76,25 @@ class GobabelStringExtractorController {
     );
 
     // 2. Define which strings are labels
-    print('Analyzing which strings are displayable labels...');
+    if (generateLogs) {
+      print('Analyzing which strings are displayable labels...');
+    }
     final labelStrings = await _defineWhichStringLabelUsecase(
       strings: allStrings,
       projectApiToken: projectApiToken,
       projectShaIdentifier: projectShaIdentifier,
     );
+
+    if (labelStrings.isEmpty) {
+      throw Exception(
+        'No displayable labels found. Please check your files and try again.',
+      );
+      return [];
+    }
+
     if (generateLogs) {
       print('Found ${labelStrings.length} displayable labels');
+
       await _saveStringListData(
         labelStrings.map((s) => s.toMap()).toList(),
         'step_2.json',

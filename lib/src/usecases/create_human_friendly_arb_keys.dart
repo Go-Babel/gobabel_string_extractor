@@ -92,13 +92,13 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     }
 
     if (isSmallAmountOfStrings) {
-      await function();
-    } else {
       await runWithSpinner(
         successMessage: 'Created human-friendly ARB keys',
         message: 'Creating human-friendly ARB keys...',
         function,
       );
+    } else {
+      await function();
     }
 
     // Map the combined server response back to the required format

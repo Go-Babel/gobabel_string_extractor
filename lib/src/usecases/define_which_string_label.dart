@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
@@ -5,6 +8,7 @@ import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
 import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
 import 'package:console_bars/console_bars.dart';
+import 'package:path/path.dart' as p;
 
 abstract class IDefineWhichStringLabelUsecase {
   /// Delete all [HardcodedStringEntity]'s that are not labels.
@@ -51,18 +55,6 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
     final Map<String, bool> combinedResults = {};
 
     final groups = splitIntoManageableGroupsForApi(extractedStrings);
-    for (final group in groups) {
-      // Call the server endpoint to analyze if strings are displayable labels
-      final result = await _client.publicArbHelpers
-          .analyseIfStringIsADisplayableLabel(
-            projectApiToken: projectApiToken,
-            projectShaIdentifier: projectShaIdentifier,
-            extractedStrings: group,
-          );
-
-      // Add results to the combined results map
-      combinedResults.addAll(result);
-    }
 
     final bool isSmallAmountOfStrings = groups.length <= 2;
 
@@ -85,24 +77,45 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
               extractedStrings: group,
             );
 
+        await _saveStringData(result, 'letsgo.json');
+
+        print('\nlets see result: ${result.length}');
+        stdout.writeln(
+          '\nAnalyzed ${group.length} strings, got ${result.length} results',
+        );
+        await Future.delayed(const Duration(seconds: 10));
+
         combinedResults.addAll(result);
       }
     }
 
     if (isSmallAmountOfStrings) {
-      await function();
-    } else {
       await runWithSpinner(
         successMessage: 'Finished analyzing strings',
-        message: 'Analyzing strings...',
+        message:
+            'Analyzing which hardcoded strings are user-facing messages, labels, and descriptions...',
         function,
       );
+    } else {
+      await function();
     }
+
+    print('\nFinished texts: ${combinedResults.length} results');
 
     // Filter the strings based on the combined server responses
     return strings.where((string) {
       // Check if the string value exists in the result map and is marked as true
       return combinedResults[string.value] == true;
     }).toList();
+  }
+
+  /// Saves data to a JSON file
+  Future<void> _saveStringData(
+    Map<String, dynamic> data,
+    String fileName,
+  ) async {
+    final outFile = File(p.join(Directory.current.path, fileName));
+    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
+    print('Saved results to ${outFile.path}');
   }
 }

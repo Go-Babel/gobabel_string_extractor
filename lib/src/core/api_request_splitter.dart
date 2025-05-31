@@ -1,3 +1,5 @@
+import 'package:gobabel_core/gobabel_core.dart';
+
 /// Utility functions for splitting API requests into manageable chunks
 /// to prevent overloading the API.
 ///
@@ -28,8 +30,9 @@ List<Map<String, String>> splitIntoManageableGroupsForApi(
     final entryLength = keyLength + valueLength;
 
     // Check if adding this entry would exceed either limit
-    if (currentGroup.length >= 300 ||
-        currentGroupCharCount + entryLength > 36000) {
+    if (currentGroup.length >= (100 * kRequestMaxKeyMultiplaier) ||
+        currentGroupCharCount + entryLength >
+            (12000 * kRequestMaxKeyMultiplaier)) {
       // Current group is full, add it to groups and start a new one
       groups.add(Map.from(currentGroup));
       currentGroup = {};
