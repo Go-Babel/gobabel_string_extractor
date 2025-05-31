@@ -1,9 +1,15 @@
-import 'package:gobabel_core/gobabel_core.dart';
-import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
-import 'package:gobabel_client/gobabel_client.dart';
-import 'package:gobabel_string_extractor/src/core/cripto.dart';
-import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:console_bars/console_bars.dart';
+import 'package:path/path.dart' as p;
+
+import 'package:gobabel_client/gobabel_client.dart';
+import 'package:gobabel_core/gobabel_core.dart';
+import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
+import 'package:gobabel_string_extractor/src/core/cripto.dart';
+import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 
 abstract class ICreateHumanFriendlyArbKeysUsecase {
   /// Creates human-friendly ARB keys for a list of hardcoded strings.
@@ -15,7 +21,7 @@ abstract class ICreateHumanFriendlyArbKeysUsecase {
   /// 2. Use camelCase format (first word lowercase, subsequent words capitalized, no spaces or underscores)
   /// 3. Accurately represent the content's meaning
   /// 4. Follow best practices for i18n key naming
-  Future<Map<TranslationKey, HardcodedStringEntity>> call({
+  Future<List<HumanFriendlyArbKeyResponse>> call({
     required List<HardcodedStringEntity> strings,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
@@ -41,18 +47,20 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
        _garanteeUniquenessOfArbKeysUsecase = garanteeUniquenessOfArbKeysUsecase;
 
   @override
-  Future<Map<TranslationKey, HardcodedStringEntity>> call({
+  Future<List<HumanFriendlyArbKeyResponse>> call({
     required List<HardcodedStringEntity> strings,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
   }) async {
-    if (strings.isEmpty) return {};
+    if (strings.isEmpty) return [];
 
     // Create a map of SHA1 keys to string values
-    final Map<String, String> extractedStrings = {};
-    for (final string in strings) {
+    final Map<L10nValue, Sha1> shaMap = {};
+    final Map<Sha1, L10nValue> extractedStrings = {};
+    for (final HardcodedStringEntity string in strings) {
       final key = generateSha1(string.value);
       extractedStrings[key] = string.value;
+      shaMap[string.value] = key;
     }
 
     // Split the strings into manageable groups for API requests
@@ -101,17 +109,63 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       await function();
     }
 
-    // Map the combined server response back to the required format
-    final Map<TranslationKey, HardcodedStringEntity> keyMap = {};
+    await _saveStringData(combinedResults, 'combinedresults.json');
+
+    final List<HumanFriendlyArbKeyResponse> keyMap = [];
+
     for (final string in strings) {
-      final sha1Key = generateSha1(string.value);
-      if (combinedResults.containsKey(sha1Key)) {
-        final arbKey = combinedResults[sha1Key]!.toCamelCaseOrEmpty;
-        keyMap[arbKey] = string;
+      final sha1 = shaMap[string.value]!;
+      final key = combinedResults[sha1]!;
+
+      // Ensure the key is unique and follows the camelCase format
+      final camelCaseKey = key.toCamelCaseOrEmpty;
+      if (camelCaseKey.isEmpty) {
+        throw Exception(
+          'Generated key for "${string.value}" is empty. Please check the string content.',
+        );
       }
+      keyMap.add(HumanFriendlyArbKeyResponse(key: camelCaseKey, value: string));
+    }
+
+    // Print the [combinedResults] where key is in none of [HumanFriendlyArbKeyResponse.key] list
+    final extractedKeys = keyMap.map((e) => e.key).toSet();
+    final missingKeys = combinedResults.keys
+        .where((key) => !extractedKeys.contains(key))
+        .toList();
+    if (missingKeys.isNotEmpty) {
+      print(
+        'The following keys were not found in the extracted strings: ${missingKeys.join(', ')}',
+      );
+    }
+
+    print(
+      '\nLets see the keys: ${extractedStrings.length}/${keyMap.length}/${combinedResults.length} keys created.\n',
+    );
+
+    final isAllEqual =
+        extractedStrings.length == keyMap.length &&
+        keyMap.length == combinedResults.length;
+    if (!isAllEqual) {
+      await _saveStringData({
+        'combinedResults': combinedResults.keys.toList()
+          ..sort((a, b) => a.compareTo(b)),
+        'extractedStrings': extractedStrings.keys.toList()
+          ..sort((a, b) => a.compareTo(b)),
+        'keyMap': keyMap.map((e) => e.key).toList()
+          ..sort((a, b) => a.compareTo(b)),
+      }, 'debugNotEqual.json');
     }
 
     return keyMap;
+  }
+
+  /// Saves data to a JSON file
+  Future<void> _saveStringData(
+    Map<String, dynamic> data,
+    String fileName,
+  ) async {
+    final outFile = File(p.join(Directory.current.path, fileName));
+    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
   }
 }
 
@@ -173,4 +227,17 @@ extension StringCamelCaseExtension on String {
 
     return camelCaseResult;
   }
+}
+
+class HumanFriendlyArbKeyResponse {
+  final TranslationKey key;
+  final HardcodedStringEntity value;
+
+  const HumanFriendlyArbKeyResponse({required this.key, required this.value});
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{'key': key, 'value': value.toMap()};
+  }
+
+  String toJson() => json.encode(toMap());
 }

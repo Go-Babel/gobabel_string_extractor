@@ -45,10 +45,12 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
     if (strings.isEmpty) return [];
 
     // Create a map of SHA1 keys to string values
-    final Map<String, String> extractedStrings = {};
+    final Map<L10nValue, Sha1> shaMap = {};
+    final Map<Sha1, L10nValue> extractedStrings = {};
     for (final string in strings) {
-      final key = generateSha1(string.value);
-      extractedStrings[key] = string.value.trimHardcodedString;
+      final valueSha1 = generateSha1(string.value);
+      extractedStrings[valueSha1] = string.value.trimHardcodedString;
+      shaMap[string.value] = valueSha1;
     }
 
     // Process each group and combine results
@@ -83,7 +85,6 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
         stdout.writeln(
           '\nAnalyzed ${group.length} strings, got ${result.length} results',
         );
-        await Future.delayed(const Duration(seconds: 10));
 
         combinedResults.addAll(result);
       }
@@ -100,12 +101,11 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
       await function();
     }
 
-    print('\nFinished texts: ${combinedResults.length} results');
-
     // Filter the strings based on the combined server responses
     return strings.where((string) {
       // Check if the string value exists in the result map and is marked as true
-      return combinedResults[string.value] == true;
+      final sha1 = shaMap[string.value]!;
+      return combinedResults[sha1]!;
     }).toList();
   }
 

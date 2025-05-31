@@ -1,11 +1,11 @@
-import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_dynamic_value_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/labels_entity.dart';
+import 'package:gobabel_string_extractor/src/usecases/create_human_friendly_arb_keys.dart';
 
 abstract class IMapStringsHierarchyUsecase {
   List<LabelsEntityRootLabel> call({
-    required Map<TranslationKey, HardcodedStringEntity> strings,
+    required List<HumanFriendlyArbKeyResponse> strings,
   });
 }
 
@@ -13,17 +13,18 @@ class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
   const MapStringsHierarchyUsecaseImpl();
   @override
   List<LabelsEntityRootLabel> call({
-    required Map<TranslationKey, HardcodedStringEntity> strings,
+    required List<HumanFriendlyArbKeyResponse> strings,
+    // required Map<TranslationKey, HardcodedStringEntity> strings,
   }) {
     // First, separate root strings (those without parent) from child strings
-    final rootStrings = strings.entries
+    final rootStrings = strings
         .where(
           (e) =>
               e.value.parentStartIndex == null &&
               e.value.parentEndIndex == null,
         )
         .toList();
-    final childStrings = strings.entries
+    final childStrings = strings
         .where(
           (e) =>
               e.value.parentStartIndex != null &&
@@ -60,9 +61,10 @@ class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
   // Build children for a parent string (either root or child)
   List<LabelsEntity> _buildChildren(
     HardcodedStringEntity parent,
-    List<MapEntry<TranslationKey, HardcodedStringEntity>> allChildStrings,
+    List<HumanFriendlyArbKeyResponse> allChildStrings,
     List<HardcodedStringDynamicValue> dynamicValues,
-    Map<TranslationKey, HardcodedStringEntity> strings,
+    // Map<TranslationKey, HardcodedStringEntity> strings,
+    List<HumanFriendlyArbKeyResponse> strings,
   ) {
     final List<LabelsEntity> children = [];
 
@@ -139,7 +141,7 @@ class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
   // Build children for a dynamic value
   List<LabelsEntity> _buildDynamicValueChildren(
     HardcodedStringDynamicValue dynamicValue,
-    List<MapEntry<TranslationKey, HardcodedStringEntity>> allChildStrings,
+    List<HumanFriendlyArbKeyResponse> allChildStrings,
   ) {
     final List<LabelsEntity> children = [];
 
@@ -158,10 +160,11 @@ class MapStringsHierarchyUsecaseImpl implements IMapStringsHierarchyUsecase {
         childEntry.value,
         allChildStrings,
         childEntry.value.dynamicFields,
-        allChildStrings.fold(
-          {},
-          (map, entry) => map..[entry.key] = entry.value,
-        ),
+        allChildStrings,
+        // allChildStrings.fold(
+        //   {},
+        //   (map, entry) => map..[entry.key] = entry.value,
+        // ),
       );
 
       children.add(

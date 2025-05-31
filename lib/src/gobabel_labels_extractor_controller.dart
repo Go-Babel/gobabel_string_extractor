@@ -64,7 +64,6 @@ class GobabelStringExtractorController {
       () async {
         final allStrings = await _extractAllStringsUsecase(files: files);
         if (generateLogs) {
-          print('Extracted ${allStrings.length} raw strings');
           await _saveStringListData(
             allStrings.map((s) => s.toMap()).toList(),
             'step_1.json',
@@ -89,7 +88,6 @@ class GobabelStringExtractorController {
       throw Exception(
         'No displayable labels found. Please check your files and try again.',
       );
-      return [];
     }
 
     if (generateLogs) {
@@ -110,9 +108,18 @@ class GobabelStringExtractorController {
     );
     if (generateLogs) {
       print('Created ${keyedStrings.length} ARB keys');
-      await _saveStringData(
-        keyedStrings.map((k, v) => MapEntry(k, v.toMap())),
+      await _saveStringListData(
+        keyedStrings.map((k) => k.toMap()).toList(),
+        // keyedStrings.map((k, v) => MapEntry(k, v.toMap())),
         'step_3.json',
+      );
+    }
+
+    // Garantee is same lenght
+    if (keyedStrings.length != labelStrings.length) {
+      throw Exception(
+        'Mismatch in number of strings after creating ARB keys.'
+        'Expected ${labelStrings.length}, got ${keyedStrings.length}.\nThis is likely a bug in our side, please contact support',
       );
     }
 
@@ -167,7 +174,6 @@ class GobabelStringExtractorController {
   ) async {
     final outFile = File(p.join(Directory.current.path, fileName));
     await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
-    print('Saved results to ${outFile.path}');
   }
 
   /// Saves data to a JSON file
@@ -177,6 +183,5 @@ class GobabelStringExtractorController {
   ) async {
     final outFile = File(p.join(Directory.current.path, fileName));
     await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
-    print('Saved results to ${outFile.path}');
   }
 }
