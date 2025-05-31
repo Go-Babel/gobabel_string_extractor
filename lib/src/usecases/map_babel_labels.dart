@@ -1,4 +1,5 @@
 import 'package:gobabel_core/gobabel_core.dart';
+import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:gobabel_string_extractor/src/entities/babel_label_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/labels_entity.dart';
 
@@ -101,7 +102,7 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
       l10nKey: l10nKey,
       filePath: filePath,
       children: children,
-      l10nValue: l10nValue,
+      l10nValue: l10nValue.trimHardcodedString,
       fileEndIndex: fileEndIndex,
       fileStartIndex: fileStartIndex,
       babelFunctionDeclaration: gobabelFunctionDeclarationString,
@@ -179,7 +180,7 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
 
     return BabelLabelEntityChildLabel(
       l10nKey: l10nKey,
-      l10nValue: l10nValue,
+      l10nValue: l10nValue.trimHardcodedString,
       parentStartIndex: parentStartIndex,
       parentEndIndex: parentEndIndex,
       babelFunctionImplementation: gobabelFunctionImplementationString,

@@ -16,10 +16,10 @@ const List<String> excludedFolders = [
 /// Gets eligible files for string extraction from the directory
 Future<List<File>> getEligibleFiles(Directory dir) async {
   Directory lib;
-  if (dir.path.endsWith('lib')) {
+  if (dir.path.endsWith('/lib')) {
     lib = dir;
   } else {
-    lib = Directory('${dir.path}/lib');
+    lib = Directory('${dir.path}lib');
   }
 
   final List<FileSystemEntity> entities = await lib

@@ -127,35 +127,6 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       keyMap.add(HumanFriendlyArbKeyResponse(key: camelCaseKey, value: string));
     }
 
-    // Print the [combinedResults] where key is in none of [HumanFriendlyArbKeyResponse.key] list
-    final extractedKeys = keyMap.map((e) => e.key).toSet();
-    final missingKeys = combinedResults.keys
-        .where((key) => !extractedKeys.contains(key))
-        .toList();
-    if (missingKeys.isNotEmpty) {
-      print(
-        'The following keys were not found in the extracted strings: ${missingKeys.join(', ')}',
-      );
-    }
-
-    print(
-      '\nLets see the keys: ${extractedStrings.length}/${keyMap.length}/${combinedResults.length} keys created.\n',
-    );
-
-    final isAllEqual =
-        extractedStrings.length == keyMap.length &&
-        keyMap.length == combinedResults.length;
-    if (!isAllEqual) {
-      await _saveStringData({
-        'combinedResults': combinedResults.keys.toList()
-          ..sort((a, b) => a.compareTo(b)),
-        'extractedStrings': extractedStrings.keys.toList()
-          ..sort((a, b) => a.compareTo(b)),
-        'keyMap': keyMap.map((e) => e.key).toList()
-          ..sort((a, b) => a.compareTo(b)),
-      }, 'debugNotEqual.json');
-    }
-
     return keyMap;
   }
 

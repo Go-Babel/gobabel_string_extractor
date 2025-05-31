@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:gobabel_client/gobabel_client.dart';
@@ -135,6 +137,7 @@ class GobabelStringExtractorController {
     }
 
     // 5. Map to babel labels models
+    if (generateLogs) print('Mapping to Babel labels...');
     final babelLabels = _mapBabelLabelsUsecase(strings: labelEntities);
 
     Map<FilePath, List<BabelLabelEntityRootLabel>> allHardcodedStrings =
@@ -148,6 +151,12 @@ class GobabelStringExtractorController {
       allHardcodedStrings[filePath]!.add(babelLabel);
     }
 
+    if (generateLogs) {
+      print(
+        'Mapped ${babelLabels.length} Babel labels to ${allHardcodedStrings.length} files',
+      );
+    }
+
     // Sort the entries by startIndex. The first should be the biggest index,
     // the last should be the smallest index
     allHardcodedStrings.forEach((key, value) {
@@ -158,11 +167,12 @@ class GobabelStringExtractorController {
       });
     });
 
-    // Save the result
-    await _saveStringListData(
-      babelLabels.map((label) => label.toJson()).toList(),
-      'translated_result.json',
-    );
+    if (generateLogs) {
+      await _saveStringListData(
+        babelLabels.map((label) => label.toJson()).toList(),
+        'step_5.json',
+      );
+    }
 
     return allHardcodedStrings.entries.toList();
   }
