@@ -96,7 +96,7 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
         _inferDeclaration(key: l10nKey, value: l10nValue);
 
     BabelFunctionImplementation gobabelFunctionImplementationString =
-        '$kBabelClass.$l10nKey(${implementationParameters.map((e) => e).join(', ')})';
+        '$kBabelClass.$l10nKey(${implementationParameters.map((e) => e.cleanHardcoded).join(', ')})';
 
     return BabelLabelEntityRootLabel(
       l10nKey: l10nKey,
@@ -176,7 +176,7 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
   }''';
 
     BabelFunctionImplementation gobabelFunctionImplementationString =
-        '$kBabelClass.$l10nKey(${implementationParameters.map((e) => e).join(', ')})';
+        '$kBabelClass.$l10nKey(${implementationParameters.map((e) => e.cleanHardcoded).join(', ')})';
 
     return BabelLabelEntityChildLabel(
       l10nKey: l10nKey,
