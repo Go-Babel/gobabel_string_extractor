@@ -65,6 +65,7 @@ Future<void> _saveStringListData(
 }
 
 /// Saves data to a JSON file
+// ignore: unused_element
 Future<void> _saveStringData(Map<String, dynamic> data, String fileName) async {
   final outFile = File(p.join(Directory.current.path, fileName));
   await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));

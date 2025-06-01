@@ -67,9 +67,9 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
     }
 
     // Sort children by parentStartIndex in descending order (biggest first, smallest last)
-    index = 0;
+    index = children.length + 1;
     for (final child in children.reversed) {
-      index++;
+      index--;
       child.mapOrNull(
         labelDynamicValue: (value) {
           final startIndex = value.parentStartIndex;
@@ -144,9 +144,9 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
     }
 
     // Sort children by parentStartIndex in descending order (biggest first, smallest last)
-    index = 0;
+    index = children.reversed.length + 1;
     for (final child in children.reversed) {
-      index++;
+      index--;
       child.mapOrNull(
         labelDynamicValue: (value) {
           final startIndex = value.parentStartIndex;

@@ -53,7 +53,6 @@ class GobabelStringExtractorController {
     required List<File> files,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
-
     String apiBaseUrl = 'http://localhost:8080/',
     bool generateLogs = false,
   }) async {
@@ -65,16 +64,16 @@ class GobabelStringExtractorController {
       message: 'Extracting strings from ${files.length} files...',
       () async {
         final allStrings = await _extractAllStringsUsecase(files: files);
-        if (generateLogs) {
-          await _saveStringListData(
-            allStrings.map((s) => s.toMap()).toList(),
-            'step_1.json',
-          );
-        }
 
         return allStrings;
       },
     );
+    if (generateLogs) {
+      await _saveStringListData(
+        allStrings.map((s) => s.toMap()).toList(),
+        'step_1.json',
+      );
+    }
 
     // 2. Define which strings are labels
     if (generateLogs) {
@@ -137,7 +136,6 @@ class GobabelStringExtractorController {
     }
 
     // 5. Map to babel labels models
-    if (generateLogs) print('Mapping to Babel labels...');
     final babelLabels = _mapBabelLabelsUsecase(strings: labelEntities);
 
     Map<FilePath, List<BabelLabelEntityRootLabel>> allHardcodedStrings =
