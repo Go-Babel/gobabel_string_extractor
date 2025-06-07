@@ -158,11 +158,9 @@ class GobabelStringExtractorController {
     // Sort the entries by startIndex. The first should be the biggest index,
     // the last should be the smallest index
     allHardcodedStrings.forEach((key, value) {
-      value.sort((a, b) {
-        final aIndex = a.fileStartIndex;
-        final bIndex = b.fileStartIndex;
-        return aIndex.compareTo(bIndex); // Descending order
-      });
+      value.sort(
+        (a, b) => b.fileStartIndex.compareTo(a.fileStartIndex),
+      );
     });
 
     if (generateLogs) {
