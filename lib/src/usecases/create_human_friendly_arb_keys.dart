@@ -26,6 +26,8 @@ abstract class ICreateHumanFriendlyArbKeysUsecase {
     required List<HardcodedStringEntity> strings,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
+    required Map<HardCodedString, TranslationKey>
+    projectHardcodedStringKeyCache,
   });
 }
 
@@ -52,6 +54,8 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     required List<HardcodedStringEntity> strings,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
+    required Map<HardCodedString, TranslationKey>
+    projectHardcodedStringKeyCache,
   }) async {
     if (strings.isEmpty) {
       return HumanFriendlyResponse(
@@ -60,79 +64,100 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       );
     }
 
-    // Create a map of SHA1 keys to string values
-    final Map<L10nValue, Sha1> shaMap = {};
-    final Map<Sha1, L10nValue> extractedStrings = {};
-    for (final HardcodedStringEntity string in strings) {
-      final key = generateSha1(string.value);
-      extractedStrings[key] = string.value;
-      shaMap[string.value] = key;
-    }
-
-    // Split the strings into manageable groups for API requests
-    final groups = splitIntoManageableGroupsForApi(extractedStrings);
-
-    // Process each group and combine results
-    final Map<String, String> combinedResults = {};
-
-    final bool isSmallAmountOfStrings = groups.length <= 2;
-
-    final FillingBar? p = isSmallAmountOfStrings
-        ? null
-        : FillingBar(
-            desc: 'Replacing hardcoded strings...',
-            total: groups.length,
-            time: true,
-            percentage: true,
-          );
-
-    Future<void> function() async {
-      for (final group in groups) {
-        p?.increment();
-        // Call the server endpoint to generate ARB keys
-        final result = await _client.publicArbHelpers.createArbKeyNames(
-          projectApiToken: projectApiToken,
-          projectShaIdentifier: projectShaIdentifier,
-          translationContents: group,
-        );
-
-        // Add results to the combined results map
-        combinedResults.addAll(
-          result.map((key, value) {
-            return MapEntry(_garanteeUniquenessOfArbKeysUsecase(key), value);
-          }),
-        );
-      }
-    }
-
-    if (isSmallAmountOfStrings) {
-      await runWithSpinner(
-        successMessage: 'Created human-friendly ARB keys',
-        message: 'Creating human-friendly ARB keys...',
-        function,
-      );
-    } else {
-      await function();
-    }
-
-    await _saveStringData(combinedResults, 'combinedresults.json');
-
     final List<HumanFriendlyArbKeyResponse> keyMap = [];
-    final Map<HardCodedString, TranslationKey> newHardcodedStringKeyCache = {};
+
+    // Separate strings that are already in cache vs need to be generated
+    final List<HardcodedStringEntity> stringsNeedingGeneration = [];
 
     for (final string in strings) {
-      final sha1 = shaMap[string.value]!;
-      final key = combinedResults[sha1]!;
-
-      // Ensure the key is unique and follows the camelCase format
-      final camelCaseKey = key.toCamelCaseOrEmpty;
-      if (camelCaseKey.isEmpty) {
-        throw Exception(
-          'Generated key for "${string.value}" is empty. Please check the string content.',
-        );
+      final cachedKey = projectHardcodedStringKeyCache[string.value];
+      if (cachedKey != null) {
+        // Use cached key
+        keyMap.add(HumanFriendlyArbKeyResponse(key: cachedKey, value: string));
+      } else {
+        // Need to generate key
+        stringsNeedingGeneration.add(string);
       }
-      keyMap.add(HumanFriendlyArbKeyResponse(key: camelCaseKey, value: string));
-      newHardcodedStringKeyCache[string.value] = camelCaseKey;
+    }
+
+    final Map<HardCodedString, TranslationKey> newHardcodedStringKeyCache = {};
+
+    // Only generate keys for strings not in cache
+    if (stringsNeedingGeneration.isNotEmpty) {
+      // Create a map of SHA1 keys to string values for strings needing generation
+      final Map<L10nValue, Sha1> shaMap = {};
+      final Map<Sha1, L10nValue> extractedStrings = {};
+      for (final HardcodedStringEntity string in stringsNeedingGeneration) {
+        final key = generateSha1(string.value);
+        extractedStrings[key] = string.value;
+        shaMap[string.value] = key;
+      }
+
+      // Split the strings into manageable groups for API requests
+      final groups = splitIntoManageableGroupsForApi(extractedStrings);
+
+      // Process each group and combine results
+      final Map<String, String> combinedResults = {};
+
+      final bool isSmallAmountOfStrings = groups.length <= 2;
+
+      final FillingBar? p = isSmallAmountOfStrings
+          ? null
+          : FillingBar(
+              desc: 'Replacing hardcoded strings...',
+              total: groups.length,
+              time: true,
+              percentage: true,
+            );
+
+      Future<void> function() async {
+        for (final group in groups) {
+          p?.increment();
+          // Call the server endpoint to generate ARB keys
+          final result = await _client.publicArbHelpers.createArbKeyNames(
+            projectApiToken: projectApiToken,
+            projectShaIdentifier: projectShaIdentifier,
+            translationContents: group,
+          );
+
+          // Add results to the combined results map
+          combinedResults.addAll(
+            result.map((key, value) {
+              return MapEntry(_garanteeUniquenessOfArbKeysUsecase(key), value);
+            }),
+          );
+        }
+      }
+
+      if (isSmallAmountOfStrings) {
+        await runWithSpinner(
+          successMessage: 'Created human-friendly ARB keys',
+          message: 'Creating human-friendly ARB keys...',
+          function,
+        );
+      } else {
+        await function();
+      }
+
+      await _saveStringData(combinedResults, 'combinedresults.json');
+
+      // Process the generated keys
+      for (final string in stringsNeedingGeneration) {
+        final sha1 = shaMap[string.value]!;
+        final key = combinedResults[sha1]!;
+
+        // Ensure the key is unique and follows the camelCase format
+        final camelCaseKey = key.toCamelCaseOrEmpty;
+        if (camelCaseKey.isEmpty) {
+          throw Exception(
+            'Generated key for "${string.value}" is empty. Please check the string content.',
+          );
+        }
+        keyMap.add(
+          HumanFriendlyArbKeyResponse(key: camelCaseKey, value: string),
+        );
+        newHardcodedStringKeyCache[string.value] = camelCaseKey;
+      }
     }
 
     return HumanFriendlyResponse(

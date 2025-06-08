@@ -107,6 +107,7 @@ class GobabelStringExtractorController {
       strings: labelStrings,
       projectApiToken: projectApiToken,
       projectShaIdentifier: projectShaIdentifier,
+      projectHardcodedStringKeyCache: projectHardcodedStringKeyCache,
     );
 
     final keyedStrings = humanFriendlyResponse.humanFriendlyArbKeys;
