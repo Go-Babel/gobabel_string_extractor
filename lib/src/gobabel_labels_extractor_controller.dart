@@ -48,12 +48,13 @@ class GobabelStringExtractorController {
   /// [projectApiToken] - Project API token for authentication
   /// [projectShaIdentifier] - Project SHA identifier
   /// [apiBaseUrl] - Base URL for the API (defaults to localhost)
-  Future<Iterable<MapEntry<FilePath, List<BabelLabelEntityRootLabel>>>>
-  extractAndProcessStrings({
+  Future<ExtractorResponse> extractAndProcessStrings({
     required List<File> files,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
     String apiBaseUrl = 'http://localhost:8080/',
+    required Map<HardCodedString, TranslationKey>
+    projectHardcodedStringKeyCache,
     bool generateLogs = false,
   }) async {
     if (generateLogs) print('Extracting strings from ${files.length} files...');
@@ -102,11 +103,16 @@ class GobabelStringExtractorController {
 
     // 3. Create human-friendly ARB keys
     if (generateLogs) print('Creating human-friendly ARB keys...');
-    final keyedStrings = await _createHumanFriendlyArbKeysUsecase(
+    final humanFriendlyResponse = await _createHumanFriendlyArbKeysUsecase(
       strings: labelStrings,
       projectApiToken: projectApiToken,
       projectShaIdentifier: projectShaIdentifier,
     );
+
+    final keyedStrings = humanFriendlyResponse.humanFriendlyArbKeys;
+    final newHardcodedStringKeyCache =
+        humanFriendlyResponse.newHardcodedStringKeyCache;
+
     if (generateLogs) {
       print('Created ${keyedStrings.length} ARB keys');
       await _saveStringListData(
@@ -168,7 +174,10 @@ class GobabelStringExtractorController {
       );
     }
 
-    return allHardcodedStrings.entries.toList();
+    return ExtractorResponse(
+      allHardcodedStrings: allHardcodedStrings.entries.toList(),
+      newHardcodedStringKeyCache: newHardcodedStringKeyCache,
+    );
   }
 
   /// Saves data to a JSON file
@@ -188,4 +197,15 @@ class GobabelStringExtractorController {
     final outFile = File(p.join(Directory.current.path, fileName));
     await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
   }
+}
+
+class ExtractorResponse {
+  final Iterable<MapEntry<FilePath, List<BabelLabelEntityRootLabel>>>
+  allHardcodedStrings;
+  final Map<HardCodedString, TranslationKey> newHardcodedStringKeyCache;
+
+  const ExtractorResponse({
+    required this.allHardcodedStrings,
+    required this.newHardcodedStringKeyCache,
+  });
 }

@@ -2,6 +2,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:console_bars/console_bars.dart';
 import 'package:path/path.dart' as p;
 
@@ -21,7 +22,7 @@ abstract class ICreateHumanFriendlyArbKeysUsecase {
   /// 2. Use camelCase format (first word lowercase, subsequent words capitalized, no spaces or underscores)
   /// 3. Accurately represent the content's meaning
   /// 4. Follow best practices for i18n key naming
-  Future<List<HumanFriendlyArbKeyResponse>> call({
+  Future<HumanFriendlyResponse> call({
     required List<HardcodedStringEntity> strings,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
@@ -47,12 +48,17 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
        _garanteeUniquenessOfArbKeysUsecase = garanteeUniquenessOfArbKeysUsecase;
 
   @override
-  Future<List<HumanFriendlyArbKeyResponse>> call({
+  Future<HumanFriendlyResponse> call({
     required List<HardcodedStringEntity> strings,
     required String projectApiToken,
     required BigInt projectShaIdentifier,
   }) async {
-    if (strings.isEmpty) return [];
+    if (strings.isEmpty) {
+      return HumanFriendlyResponse(
+        newHardcodedStringKeyCache: {},
+        humanFriendlyArbKeys: [],
+      );
+    }
 
     // Create a map of SHA1 keys to string values
     final Map<L10nValue, Sha1> shaMap = {};
@@ -112,6 +118,7 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     await _saveStringData(combinedResults, 'combinedresults.json');
 
     final List<HumanFriendlyArbKeyResponse> keyMap = [];
+    final Map<HardCodedString, TranslationKey> newHardcodedStringKeyCache = {};
 
     for (final string in strings) {
       final sha1 = shaMap[string.value]!;
@@ -125,9 +132,13 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
         );
       }
       keyMap.add(HumanFriendlyArbKeyResponse(key: camelCaseKey, value: string));
+      newHardcodedStringKeyCache[string.value] = camelCaseKey;
     }
 
-    return keyMap;
+    return HumanFriendlyResponse(
+      newHardcodedStringKeyCache: newHardcodedStringKeyCache,
+      humanFriendlyArbKeys: keyMap,
+    );
   }
 
   /// Saves data to a JSON file
@@ -211,4 +222,29 @@ class HumanFriendlyArbKeyResponse {
   }
 
   String toJson() => json.encode(toMap());
+}
+
+class HumanFriendlyResponse {
+  final Map<HardCodedString, TranslationKey> newHardcodedStringKeyCache;
+  final List<HumanFriendlyArbKeyResponse> humanFriendlyArbKeys;
+  const HumanFriendlyResponse({
+    required this.newHardcodedStringKeyCache,
+    required this.humanFriendlyArbKeys,
+  });
+
+  @override
+  bool operator ==(covariant HumanFriendlyResponse other) {
+    if (identical(this, other)) return true;
+    final collectionEquals = const DeepCollectionEquality().equals;
+
+    return collectionEquals(
+          other.newHardcodedStringKeyCache,
+          newHardcodedStringKeyCache,
+        ) &&
+        collectionEquals(other.humanFriendlyArbKeys, humanFriendlyArbKeys);
+  }
+
+  @override
+  int get hashCode =>
+      newHardcodedStringKeyCache.hashCode ^ humanFriendlyArbKeys.hashCode;
 }

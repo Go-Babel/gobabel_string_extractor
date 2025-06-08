@@ -65,21 +65,28 @@ void main(List<String> args) async {
 
     // Process the files
     final controller = GobabelStringExtractorController(client: client);
-    final Iterable<MapEntry<String, List<BabelLabelEntityRootLabel>>> results;
+    final ExtractorResponse extractorResponse;
 
     try {
-      results = await controller.extractAndProcessStrings(
+      extractorResponse = await controller.extractAndProcessStrings(
         projectApiToken: projectApiToken,
         projectShaIdentifier: BigInt.parse(projectShaIdentifier),
         files: files,
         apiBaseUrl: apiBaseUrl,
         generateLogs: true,
+        projectHardcodedStringKeyCache: {},
       );
     } catch (e, s) {
       throw Exception(
         'Error during string extraction:\n$e\n\n\nStack trace: $s',
       );
     }
+
+    final results = extractorResponse.allHardcodedStrings;
+    final newCache = extractorResponse.newHardcodedStringKeyCache;
+
+    print('Generated ${newCache.length} new cache entries');
+
     // Replace hardcoded strings with babel function declarations
     for (final entry in results) {
       final filePath = entry.key;
