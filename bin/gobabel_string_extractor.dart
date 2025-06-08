@@ -3,6 +3,9 @@ import 'package:args/args.dart';
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/gobabel_labels_extractor.dart';
 
+/*
+dart run gobabel_string_extractor/bin/gobabel_string_extractor.dart --api-key=01972dbd-59a4-7574-a796-80ae317e7876 --project-sha-identifier=325439440403537605558364609031590613901966306984930054075442972529951867760824221376735455794372 --path="go_babel_app/gobabel_flutter/"
+*/
 void main(List<String> args) async {
   // Parse command line arguments
   final parser = ArgParser()
@@ -62,12 +65,51 @@ void main(List<String> args) async {
 
     // Process the files
     final controller = GobabelStringExtractorController(client: client);
-    await controller.extractAndProcessStrings(
-      projectApiToken: projectApiToken,
-      projectShaIdentifier: BigInt.parse(projectShaIdentifier),
-      files: files,
-      apiBaseUrl: apiBaseUrl,
-    );
+    final Iterable<MapEntry<String, List<BabelLabelEntityRootLabel>>> results;
+
+    try {
+      results = await controller.extractAndProcessStrings(
+        projectApiToken: projectApiToken,
+        projectShaIdentifier: BigInt.parse(projectShaIdentifier),
+        files: files,
+        apiBaseUrl: apiBaseUrl,
+        generateLogs: true,
+      );
+    } catch (e, s) {
+      throw Exception(
+        'Error during string extraction:\n$e\n\n\nStack trace: $s',
+      );
+    }
+    // Replace hardcoded strings with babel function declarations
+    for (final entry in results) {
+      final filePath = entry.key;
+      final babelLabels = entry.value;
+
+      final file = File(filePath);
+      if (!await file.exists()) {
+        print('Warning: File not found: $filePath');
+        continue;
+      }
+
+      String content = await file.readAsString();
+
+      // Process labels (already sorted by fileStartIndex in descending order)
+      for (final label in babelLabels) {
+        final startIndex = label.fileStartIndex;
+        final endIndex = label.fileEndIndex;
+        final replacement = label.babelFunctionImplementation;
+
+        // Replace the content
+        content =
+            content.substring(0, startIndex) +
+            replacement +
+            content.substring(endIndex);
+      }
+
+      // Write back to file
+      await file.writeAsString(content);
+      print('Updated file: $filePath');
+    }
     print('String extraction completed successfully.');
   } catch (e) {
     stderr.writeln('Error during string extraction: $e');
