@@ -8,7 +8,6 @@ import 'package:path/path.dart' as p;
 
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_core/gobabel_core.dart';
-import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 

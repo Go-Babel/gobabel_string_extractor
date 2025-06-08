@@ -3,7 +3,6 @@ import 'package:gobabel_string_extractor/src/core/extensions/string_extension.da
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
-import 'package:gobabel_string_extractor/src/core/api_request_splitter.dart';
 import 'package:console_bars/console_bars.dart';
 
 abstract class IDefineWhichStringLabelUsecase {
