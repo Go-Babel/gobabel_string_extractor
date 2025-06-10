@@ -4,7 +4,6 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:console_bars/console_bars.dart';
-import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:gobabel_client/gobabel_client.dart';

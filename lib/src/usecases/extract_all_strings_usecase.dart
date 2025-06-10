@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/utilities.dart';
 import 'package:analyzer/dart/ast/ast.dart';
 import 'package:analyzer/dart/ast/visitor.dart';
-import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
+import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_dynamic_value_entity.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_string_extractor/src/usecases/validate_candidate_string.dart';

@@ -1,5 +1,4 @@
 import 'package:gobabel_core/gobabel_core.dart';
-import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';

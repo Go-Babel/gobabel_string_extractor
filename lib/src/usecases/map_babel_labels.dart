@@ -168,7 +168,7 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
     }
 
     BabelFunctionDeclaration gobabelFunctionDeclarationString =
-        '''${hardcodedString.formatToComment}
+        '''${hardcodedString.trimHardcodedString.formatToComment}
   static String $l10nKey(${variableNames.map((e) => 'Object? $e').join(', ')}) {
     return _getByKey('$l10nKey')${variableNames.map((e) => '.replaceAll(\'{$e}\', $e.toString())').join()};
   }''';
