@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:console_bars/console_bars.dart';
+import 'package:gobabel_string_extractor/src/core/extensions/string_extension.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:gobabel_client/gobabel_client.dart';
@@ -69,7 +70,8 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
     final List<HardcodedStringEntity> stringsNeedingGeneration = [];
 
     for (final string in strings) {
-      final cachedKey = projectHardcodedStringKeyCache[string.value];
+      final cachedKey =
+          projectHardcodedStringKeyCache[string.value.trimHardcodedString];
       if (cachedKey != null) {
         // Use cached key
         keyMap.add(HumanFriendlyArbKeyResponse(key: cachedKey, value: string));
@@ -122,7 +124,7 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
           // Add results to the combined results map
           combinedResults.addAll(
             result.map((key, value) {
-              return MapEntry(_garanteeUniquenessOfArbKeysUsecase(key), value);
+              return MapEntry(key.trimHardcodedString, value);
             }),
           );
         }
@@ -146,7 +148,10 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
         final key = combinedResults[sha1]!;
 
         // Ensure the key is unique and follows the camelCase format
-        final camelCaseKey = key.toCamelCaseOrEmpty;
+        final camelCaseKey = _garanteeUniquenessOfArbKeysUsecase(
+          key.toCamelCaseOrEmpty,
+        );
+        // final camelCaseKey = key.toCamelCaseOrEmpty;
         if (camelCaseKey.isEmpty) {
           throw Exception(
             'Generated key for "${string.value}" is empty. Please check the string content.',

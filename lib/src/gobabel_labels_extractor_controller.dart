@@ -58,6 +58,12 @@ class GobabelStringExtractorController {
     bool generateLogs = false,
   }) async {
     if (generateLogs) print('Extracting strings from ${files.length} files...');
+    if (files.isEmpty) {
+      return ExtractorResponse(
+        allHardcodedStrings: {},
+        newHardcodedStringKeyCache: {},
+      );
+    }
 
     // 1. Extract all strings from the files
     final allStrings = await runWithSpinner(

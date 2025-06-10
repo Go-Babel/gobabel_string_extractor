@@ -70,8 +70,6 @@ class MapBabelLabelsUsecaseImpl implements IMapBabelLabelsUsecase {
       startListOrder.add(_getStartIndex(child));
       endListOrder.add(_getEndIndex(child));
     }
-    print('Start ${startListOrder.join(', ')}');
-    print('End ${endListOrder.join(', ')}');
     for (final child in children) {
       index--;
       child.mapOrNull(

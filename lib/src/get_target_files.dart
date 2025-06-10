@@ -39,10 +39,12 @@ Future<List<File>> getEligibleFiles(Directory dir) async {
 
       final isFreezedFile = file.path.endsWith('.freezed.dart');
       final isPartFile = file.path.endsWith('.part.dart');
+      final isGen = file.path.endsWith('.gen.dart');
       final isGeneratedFile = file.path.endsWith('.g.dart');
       if (segmentContainExcludeFolder ||
           segmentContainPrivateFolder ||
           isFreezedFile ||
+          isGen ||
           isPartFile ||
           isGeneratedFile) {
         return false; // Exclude this file
