@@ -1,10 +1,11 @@
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gobabel_core/gobabel_core.dart';
 import 'package:gobabel_string_extractor/src/entities/hardcoded_string_entity.dart';
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_string_extractor/src/core/cripto.dart';
 import 'package:console_bars/console_bars.dart';
 
-abstract class IDefineWhichStringLabelUsecase {
+abstract class IDefineWhichStringAreUserFriendlyLabelUsecase {
   /// Delete all [HardcodedStringEntity]'s that are not labels.
   ///
   /// We wan't to ignore hardcoded strings that are dart code, like toString() method outputs, etc.
@@ -16,19 +17,24 @@ abstract class IDefineWhichStringLabelUsecase {
   });
 }
 
-/// Implementation of [IDefineWhichStringLabelUsecase] that uses the Serverpod server
+/// Implementation of [IDefineWhichStringAreUserFriendlyLabelUsecase] that uses the Serverpod server
 /// with AI to determine which strings are displayable labels.
 class DefineWhichStringLabelWithAiOnServerUsecaseImpl
-    implements IDefineWhichStringLabelUsecase {
+    implements IDefineWhichStringAreUserFriendlyLabelUsecase {
   final Client _client;
 
   /// Creates a new instance of [DefineWhichStringLabelWithAiOnServerUsecaseImpl].
   ///
   /// Requires [projectApiToken] and [projectShaIdentifier] for authenticating
   /// with the server, and an optional [client] for making the API calls.
-  const DefineWhichStringLabelWithAiOnServerUsecaseImpl({
-    required Client client,
-  }) : _client = client;
+  DefineWhichStringLabelWithAiOnServerUsecaseImpl({required Client client})
+    : _client = client;
+
+  @visibleForTesting
+  bool shouldAutomaticallyBeConsideredAValidString(String value) {
+    final RegExp namePattern = RegExp(r'^[A-Z][a-z]+$');
+    return namePattern.hasMatch(value);
+  }
 
   @override
   Future<List<HardcodedStringEntity>> call({
@@ -38,10 +44,27 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
   }) async {
     if (strings.isEmpty) return [];
 
-    // Create a map of SHA1 keys to string values
+    // Separate strings that are automatically valid from those needing API validation
+    final List<HardcodedStringEntity> automaticallyValidStrings = [];
+    final List<HardcodedStringEntity> stringsNeedingValidation = [];
+
+    for (final string in strings) {
+      if (shouldAutomaticallyBeConsideredAValidString(string.value)) {
+        automaticallyValidStrings.add(string);
+      } else {
+        stringsNeedingValidation.add(string);
+      }
+    }
+
+    // If no strings need API validation, return the automatically valid ones
+    if (stringsNeedingValidation.isEmpty) {
+      return automaticallyValidStrings;
+    }
+
+    // Create a map of SHA1 keys to string values for API validation
     final Map<L10nValue, Sha1> shaMap = {};
     final Map<Sha1, L10nValue> extractedStrings = {};
-    for (final string in strings) {
+    for (final string in stringsNeedingValidation) {
       final valueSha1 = generateSha1(string.value);
       extractedStrings[valueSha1] = string.value.trimHardcodedString;
       shaMap[string.value] = valueSha1;
@@ -87,11 +110,14 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
       await function();
     }
 
-    // Filter the strings based on the combined server responses
-    return strings.where((string) {
-      // Check if the string value exists in the result map and is marked as true
-      final sha1 = shaMap[string.value]!;
-      return combinedResults[sha1]!;
-    }).toList();
+    // Filter the strings that needed validation based on the server responses
+    final List<HardcodedStringEntity> apiValidatedStrings =
+        stringsNeedingValidation.where((string) {
+          final sha1 = shaMap[string.value]!;
+          return combinedResults[sha1]!;
+        }).toList();
+
+    // Combine automatically valid strings with API-validated strings
+    return [...automaticallyValidStrings, ...apiValidatedStrings];
   }
 }

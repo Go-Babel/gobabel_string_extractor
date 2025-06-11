@@ -16,7 +16,8 @@ abstract class IExtractAllStringsUsecase {
 /// Implementation of IExtractAllStringsUsecase that extracts strings from Dart files
 class ExtractAllStringsInDartUsecaseImpl implements IExtractAllStringsUsecase {
   final ValidateCandidateStringUsecase validateCandidateStringUsecase;
-  const ExtractAllStringsInDartUsecaseImpl({
+
+  ExtractAllStringsInDartUsecaseImpl({
     required this.validateCandidateStringUsecase,
   });
 

@@ -143,6 +143,11 @@ void main() {
       expect(result, isFalse);
     });
 
+    test('Name path should pass (with initial bar)', () {
+      final result = validateCandidateStringUsecase.call(content: 'Login');
+      expect(result, isTrue);
+    });
+
     test('Should not accept GoRouter path 1', () {
       final result = validateCandidateStringUsecase(content: '/splash');
 

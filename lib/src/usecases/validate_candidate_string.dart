@@ -9,7 +9,8 @@ class ValidateCandidateStringUsecase {
 
   /// Returns true if the string is a displayable text for the final user.
   bool call({required String content}) {
-    return hasNoWords(content) == false &&
+    return content.length != 1 &&
+        hasNoWords(content) == false &&
         CaseIdentifyRegex.isAnyCase(content) == false &&
         isUrl(content) == false;
   }
