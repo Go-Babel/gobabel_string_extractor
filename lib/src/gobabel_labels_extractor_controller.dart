@@ -76,7 +76,7 @@ class GobabelStringExtractorController {
       },
     );
     if (generateLogs) {
-      await _saveStringListData(
+      await saveStringListData(
         allStrings.map((s) => s.toMap()).toList(),
         'step_1.json',
       );
@@ -101,7 +101,7 @@ class GobabelStringExtractorController {
     if (generateLogs) {
       print('Found ${labelStrings.length} displayable labels');
 
-      await _saveStringListData(
+      await saveStringListData(
         labelStrings.map((s) => s.toMap()).toList(),
         'step_2.json',
       );
@@ -122,7 +122,7 @@ class GobabelStringExtractorController {
 
     if (generateLogs) {
       print('Created ${keyedStrings.length} ARB keys');
-      await _saveStringListData(
+      await saveStringListData(
         keyedStrings.map((k) => k.toMap()).toList(),
         // keyedStrings.map((k, v) => MapEntry(k, v.toMap())),
         'step_3.json',
@@ -142,7 +142,7 @@ class GobabelStringExtractorController {
     final labelEntities = _mapStringsHierarchyUsecase(strings: keyedStrings);
     if (generateLogs) {
       print('Created hierarchy with ${labelEntities.length} root labels');
-      await _saveStringListData(
+      await saveStringListData(
         labelEntities.map((e) => e.toJson()).toList(),
         'step_4.json',
       );
@@ -175,7 +175,7 @@ class GobabelStringExtractorController {
     });
 
     if (generateLogs) {
-      await _saveStringListData(
+      await saveStringListData(
         babelLabels.map((label) => label.toJson()).toList(),
         'step_5.json',
       );
@@ -186,24 +186,21 @@ class GobabelStringExtractorController {
       newHardcodedStringKeyCache: newHardcodedStringKeyCache,
     );
   }
+}
 
-  /// Saves data to a JSON file
-  Future<void> _saveStringListData(
-    List<Map<String, dynamic>> data,
-    String fileName,
-  ) async {
-    final outFile = File(p.join(Directory.current.path, fileName));
-    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
-  }
+/// Saves data to a JSON file
+Future<void> saveStringListData(
+  List<Map<String, dynamic>> data,
+  String fileName,
+) async {
+  final outFile = File(p.join(Directory.current.path, fileName));
+  await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
+}
 
-  /// Saves data to a JSON file
-  Future<void> _saveStringData(
-    Map<String, dynamic> data,
-    String fileName,
-  ) async {
-    final outFile = File(p.join(Directory.current.path, fileName));
-    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
-  }
+/// Saves data to a JSON file
+Future<void> saveStringData(Map<String, dynamic> data, String fileName) async {
+  final outFile = File(p.join(Directory.current.path, fileName));
+  await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
 }
 
 class ExtractorResponse {

@@ -49,7 +49,9 @@ class DefineWhichStringLabelWithAiOnServerUsecaseImpl
     final List<HardcodedStringEntity> stringsNeedingValidation = [];
 
     for (final string in strings) {
-      if (shouldAutomaticallyBeConsideredAValidString(string.value)) {
+      if (shouldAutomaticallyBeConsideredAValidString(
+        string.value.trimHardcodedString,
+      )) {
         automaticallyValidStrings.add(string);
       } else {
         stringsNeedingValidation.add(string);

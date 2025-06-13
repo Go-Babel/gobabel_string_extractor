@@ -1,10 +1,8 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:collection/collection.dart';
 import 'package:console_bars/console_bars.dart';
-import 'package:path/path.dart' as p;
 
 import 'package:gobabel_client/gobabel_client.dart';
 import 'package:gobabel_core/gobabel_core.dart';
@@ -89,7 +87,7 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       final Map<Sha1, L10nValue> extractedStrings = {};
       for (final HardcodedStringEntity string in stringsNeedingGeneration) {
         final key = generateSha1(string.value);
-        extractedStrings[key] = string.value;
+        extractedStrings[key] = string.value.trimHardcodedString;
         shaMap[string.value] = key;
       }
 
@@ -97,49 +95,50 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       final groups = splitIntoManageableGroupsForApi(extractedStrings);
 
       // Process each group and combine results
-      final Map<String, String> combinedResults = {};
+      final Map<Sha1, TranslationKey> combinedResults = {};
 
       final bool isSmallAmountOfStrings = groups.length <= 2;
+      final bool willHaveProgressBar = !isSmallAmountOfStrings;
 
-      final FillingBar? p = isSmallAmountOfStrings
-          ? null
-          : FillingBar(
+      final FillingBar? p = willHaveProgressBar
+          ? FillingBar(
               desc: 'Replacing hardcoded strings...',
               total: groups.length,
               time: true,
               percentage: true,
-            );
+            )
+          : null;
 
       Future<void> function() async {
         for (final group in groups) {
           p?.increment();
           // Call the server endpoint to generate ARB keys
-          final result = await _client.publicArbHelpers.createArbKeyNames(
-            projectApiToken: projectApiToken,
-            projectShaIdentifier: projectShaIdentifier,
-            translationContents: group,
-          );
+          final Map<Sha1, TranslationKey> result = await _client
+              .publicArbHelpers
+              .createArbKeyNames(
+                projectApiToken: projectApiToken,
+                projectShaIdentifier: projectShaIdentifier,
+                translationContents: group,
+              );
 
           // Add results to the combined results map
-          combinedResults.addAll(
-            result.map((key, value) {
-              return MapEntry(key.trimHardcodedString, value);
-            }),
-          );
+          combinedResults.addAll({
+            for (final entry in result.entries) entry.key: entry.value,
+          });
         }
       }
 
-      if (isSmallAmountOfStrings) {
+      if (willHaveProgressBar) {
+        await function();
+      } else {
         await runWithSpinner(
           successMessage: 'Created human-friendly ARB keys',
           message: 'Creating human-friendly ARB keys...',
           function,
         );
-      } else {
-        await function();
       }
 
-      await _saveStringData(combinedResults, 'combinedresults.json');
+      // await saveStringData(combinedResults, 'combinedresults.json');
 
       // Process the generated keys
       for (final string in stringsNeedingGeneration) {
@@ -167,15 +166,6 @@ class CreateHumanFriendlyArbKeysWithAiOnServerUsecaseImpl
       newHardcodedStringKeyCache: newHardcodedStringKeyCache,
       humanFriendlyArbKeys: keyMap,
     );
-  }
-
-  /// Saves data to a JSON file
-  Future<void> _saveStringData(
-    Map<String, dynamic> data,
-    String fileName,
-  ) async {
-    final outFile = File(p.join(Directory.current.path, fileName));
-    await outFile.writeAsString(JsonEncoder.withIndent('  ').convert(data));
   }
 }
 
