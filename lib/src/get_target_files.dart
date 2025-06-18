@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:path/path.dart' as p;
 
 /// List of folders to exclude from scanning
@@ -21,10 +22,16 @@ Future<List<File>> getEligibleFiles(Directory dir) async {
   } else {
     lib = Directory('${dir.path}lib');
   }
+  if (!await lib.exists()) {
+    throw Exception(
+      'The directory does not contain a "lib" folder: ${lib.path}',
+    );
+  }
 
   final List<FileSystemEntity> entities = await lib
       .list(recursive: true)
       .toList();
+
   return entities.whereType<File>().where((file) {
     // Normalize path separators for consistent splitting, then split into segments
     final pathSegments = p.split(file.path.replaceAll(r'\', '/'));
